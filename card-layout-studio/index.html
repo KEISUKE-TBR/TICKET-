@@ -1,0 +1,1383 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Card Layout Studio</title>
+  <style>
+    :root{
+      --bg:#f4f5f7;
+      --panel:#ffffff;
+      --line:#d7dbe0;
+      --text:#1f2328;
+      --muted:#68707a;
+      --accent:#2b6cb0;
+      --accent-soft:#eaf2fb;
+      --danger:#c53030;
+      --success:#267a47;
+      --canvas-scale:10;
+      --page-scale:.52;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+      font-size:14px;
+    }
+    button,input,select,textarea{font:inherit}
+    button{
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      border-radius:8px;
+      padding:8px 12px;
+      cursor:pointer;
+    }
+    button:hover{background:#f7f8fa}
+    button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    button.primary:hover{filter:brightness(.96)}
+    button.danger{color:var(--danger)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    input,select,textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:7px;
+      padding:7px 9px;
+      background:#fff;
+      color:var(--text);
+    }
+    input[type="checkbox"]{width:auto}
+    textarea{min-height:76px;resize:vertical}
+    h1,h2,h3,p{margin-top:0}
+    h1{font-size:18px;margin-bottom:3px}
+    h2{font-size:18px}
+    h3{font-size:14px;margin-bottom:10px}
+    .app-header{
+      height:64px;
+      background:#fff;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 20px;
+      position:sticky;
+      top:0;
+      z-index:50;
+    }
+    .sub{color:var(--muted);font-size:12px}
+    .status-pill{
+      padding:5px 9px;
+      border-radius:999px;
+      background:#eef6f0;
+      color:var(--success);
+      font-size:12px;
+    }
+    .app-shell{
+      display:grid;
+      grid-template-columns:180px minmax(0,1fr);
+      min-height:calc(100vh - 64px);
+    }
+    .side-nav{
+      background:#fff;
+      border-right:1px solid var(--line);
+      padding:16px 10px;
+    }
+    .tab-button{
+      display:block;
+      width:100%;
+      text-align:left;
+      border:none;
+      padding:11px 12px;
+      margin-bottom:5px;
+      background:transparent;
+    }
+    .tab-button.active{background:var(--accent-soft);color:var(--accent);font-weight:700}
+    .content{padding:20px;min-width:0}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+    .grid-2{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}
+    .grid-data{display:grid;grid-template-columns:380px minmax(0,1fr);gap:16px}
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:16px;
+      min-width:0;
+    }
+    .panel + .panel{margin-top:14px}
+    .row{display:flex;gap:8px;align-items:center}
+    .row.wrap{flex-wrap:wrap}
+    .row > .grow{flex:1}
+    .field{margin-bottom:11px}
+    .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+    .hint{
+      padding:10px 12px;
+      border-radius:8px;
+      background:#f7f8fa;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.6;
+    }
+    .warning{background:#fff8e5;color:#8a5a00}
+    .mapping-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .summary-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+    .summary-card{padding:11px;border:1px solid var(--line);border-radius:9px;background:#fafbfc}
+    .summary-card strong{display:block;font-size:20px}
+    .table-wrap{overflow:auto;max-height:610px;border:1px solid var(--line);border-radius:8px}
+    table{border-collapse:collapse;width:100%;font-size:12px}
+    th,td{border-bottom:1px solid #edf0f2;padding:7px 8px;text-align:left;vertical-align:top}
+    th{position:sticky;top:0;background:#f7f8fa;z-index:2}
+    tr:hover td{background:#fbfcfd}
+    td.message-cell{max-width:420px;white-space:pre-wrap}
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+      margin-bottom:12px;
+      align-items:center;
+    }
+    .toolbar .separator{width:1px;height:28px;background:var(--line)}
+    .design-stage{
+      overflow:auto;
+      padding:22px;
+      min-height:660px;
+      background:
+        linear-gradient(45deg,#f0f1f2 25%,transparent 25%),
+        linear-gradient(-45deg,#f0f1f2 25%,transparent 25%),
+        linear-gradient(45deg,transparent 75%,#f0f1f2 75%),
+        linear-gradient(-45deg,transparent 75%,#f0f1f2 75%);
+      background-size:18px 18px;
+      background-position:0 0,0 9px,9px -9px,-9px 0;
+      border-radius:10px;
+      border:1px solid var(--line);
+    }
+    #designCanvas{
+      width:860px;
+      height:540px;
+      position:relative;
+      margin:auto;
+      background:#fff;
+      box-shadow:0 8px 28px rgba(20,25,30,.15);
+      overflow:hidden;
+      transform-origin:top left;
+    }
+    .template-element{
+      position:absolute;
+      border:1px solid transparent;
+      user-select:none;
+      cursor:move;
+      overflow:hidden;
+    }
+    .template-element.selected{
+      border:1px solid var(--accent);
+      outline:2px solid rgba(43,108,176,.18);
+    }
+    .template-element .element-text{
+      width:100%;height:100%;
+      white-space:pre-wrap;
+      overflow:hidden;
+      display:flex;
+    }
+    .template-element img{
+      width:100%;height:100%;object-fit:contain;display:block;
+    }
+    .resize-handle{
+      width:12px;height:12px;
+      background:#fff;
+      border:2px solid var(--accent);
+      position:absolute;
+      right:-1px;bottom:-1px;
+      cursor:nwse-resize;
+      display:none;
+    }
+    .template-element.selected .resize-handle{display:block}
+    .element-chip{
+      font-size:10px;
+      position:absolute;
+      left:2px;top:2px;
+      padding:1px 4px;
+      background:rgba(43,108,176,.9);
+      color:#fff;border-radius:4px;
+      pointer-events:none;
+      display:none;
+    }
+    .template-element.selected .element-chip{display:block}
+    .inspector-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .element-list{max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+    .element-list button{
+      width:100%;border:0;border-bottom:1px solid #eef0f2;border-radius:0;text-align:left;
+    }
+    .element-list button.active{background:var(--accent-soft);color:var(--accent);font-weight:700}
+    .print-toolbar{position:sticky;top:76px;z-index:20}
+    .print-layout-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
+    #printArea{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      align-items:center;
+      padding:18px;
+      min-height:400px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#e8eaed;
+      overflow:auto;
+    }
+    .page-shell{
+      position:relative;
+      flex:none;
+      overflow:visible;
+    }
+    .print-page{
+      width:210mm;
+      height:297mm;
+      background:#fff;
+      position:absolute;
+      left:0;top:0;
+      transform:scale(var(--page-scale));
+      transform-origin:top left;
+      box-shadow:0 6px 22px rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    .print-card{
+      position:absolute;
+      width:86mm;height:54mm;
+      overflow:hidden;
+      background:#fff;
+      border-radius:2mm;
+      cursor:pointer;
+    }
+    .print-card.frame-on{border:.18mm solid #555}
+    .print-card.selected{outline:.8mm solid rgba(43,108,176,.7);outline-offset:.6mm}
+    .print-element{position:absolute;overflow:hidden}
+    .print-element.text{
+      white-space:pre-wrap;
+      display:flex;
+      word-break:break-word;
+      overflow-wrap:anywhere;
+    }
+    .print-element.image img{width:100%;height:100%;object-fit:contain;display:block}
+    .print-card.has-overflow::after{
+      content:"!";
+      position:absolute;
+      right:1.5mm;top:1.5mm;
+      width:5mm;height:5mm;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      background:#c53030;color:#fff;font-weight:700;font-size:8pt;
+    }
+    .record-badge{font-size:12px;color:var(--muted);margin-bottom:8px}
+    .empty-state{padding:35px;text-align:center;color:var(--muted)}
+    .small{font-size:12px}
+    .hidden{display:none!important}
+    .badge{display:inline-block;padding:2px 6px;border-radius:999px;background:#eef0f2;color:#59616b;font-size:11px}
+    .kbd{border:1px solid var(--line);background:#fff;border-radius:4px;padding:1px 5px;font-size:11px}
+    .footer-note{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.7}
+    .font-manager-list{max-height:130px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px;background:#fafbfc}
+    .font-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 6px;border-bottom:1px solid #eceff2}
+    .font-item:last-child{border-bottom:0}
+    .style-section{border-top:1px solid #eceff2;padding-top:12px;margin-top:12px}
+    .style-section:first-child{border-top:0;padding-top:0;margin-top:0}
+
+    @media (max-width:1100px){
+      .grid-2,.grid-data,.print-layout-grid{grid-template-columns:1fr}
+      .app-shell{grid-template-columns:150px minmax(0,1fr)}
+    }
+
+    @media print{
+      @page{size:A4 portrait;margin:0}
+      html,body{margin:0!important;padding:0!important;background:#fff!important}
+      body *{visibility:hidden!important}
+      #printArea,#printArea *{visibility:visible!important}
+      #printArea{
+        position:absolute!important;
+        left:0!important;top:0!important;
+        display:block!important;
+        padding:0!important;
+        margin:0!important;
+        border:0!important;
+        background:#fff!important;
+        overflow:visible!important;
+      }
+      .page-shell{
+        width:210mm!important;
+        height:297mm!important;
+        margin:0!important;
+        overflow:visible!important;
+        break-after:page;
+        page-break-after:always;
+      }
+      .page-shell:last-child{break-after:auto;page-break-after:auto}
+      .print-page{
+        position:relative!important;
+        transform:none!important;
+        width:210mm!important;height:297mm!important;
+        box-shadow:none!important;
+      }
+      .print-card{cursor:default!important}
+      .print-card.selected{outline:none!important}
+      .print-card.has-overflow::after{display:none!important}
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>Card Layout Studio</h1>
+      <div class="sub">CSV → デザイン差し込み → 8面印刷 / PDF保存</div>
+    </div>
+    <div class="row">
+      <span id="saveStatus" class="status-pill">ローカル保存済み</span>
+      <button id="resetAppBtn" class="danger">初期化</button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <nav class="side-nav">
+      <button class="tab-button active" data-tab="data">1. CSVデータ</button>
+      <button class="tab-button" data-tab="design">2. デザイン</button>
+      <button class="tab-button" data-tab="print">3. 配置・印刷</button>
+      <div class="footer-note">
+        データはサーバーへ送信せず、このブラウザ内だけで処理します。
+      </div>
+    </nav>
+
+    <main class="content">
+      <section id="tab-data" class="tab-panel active">
+        <div class="grid-data">
+          <div>
+            <div class="panel">
+              <h2>CSVを読み込む</h2>
+              <div class="field">
+                <label>CSVファイル</label>
+                <input id="csvFile" type="file" accept=".csv,text/csv,.txt">
+              </div>
+              <div class="field">
+                <label>文字コード</label>
+                <select id="csvEncoding">
+                  <option value="auto">自動判定</option>
+                  <option value="utf-8">UTF-8</option>
+                  <option value="shift-jis">Shift-JIS</option>
+                </select>
+              </div>
+              <button id="loadCsvBtn" class="primary">CSVを読み込む</button>
+              <div class="hint" style="margin-top:12px">
+                カンマ区切り・タブ区切りに対応しています。Googleスプレッドシートからは「ファイル → ダウンロード → カンマ区切り形式（CSV）」で保存できます。
+              </div>
+            </div>
+
+            <div id="mappingPanel" class="panel hidden">
+              <h3>列の割り当て</h3>
+              <div class="mapping-grid">
+                <div class="field">
+                  <label>管理ID</label>
+                  <select id="mapId"></select>
+                </div>
+                <div class="field">
+                  <label>贈り主</label>
+                  <select id="mapSender"></select>
+                </div>
+                <div class="field">
+                  <label>メッセージ</label>
+                  <select id="mapMessage"></select>
+                </div>
+                <div class="field">
+                  <label>QR画像URL / QR内容</label>
+                  <select id="mapQr"></select>
+                </div>
+              </div>
+              <button id="applyMappingBtn" class="primary">割り当てを適用</button>
+              <div class="hint" style="margin-top:10px">
+                QR列が画像URLならその画像を表示します。URL以外の文字列ならQuickChartでQR画像を生成します。
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="row" style="justify-content:space-between">
+              <h2>読み込み結果</h2>
+              <button id="enableAllBtn">全件を印刷対象にする</button>
+            </div>
+            <div class="summary-cards">
+              <div class="summary-card"><span class="small">読込件数</span><strong id="rowCount">0</strong></div>
+              <div class="summary-card"><span class="small">印刷対象</span><strong id="enabledCount">0</strong></div>
+              <div class="summary-card"><span class="small">ページ数</span><strong id="pageCount">0</strong></div>
+            </div>
+            <div id="dataTableWrap" class="empty-state">CSVを読み込むと、ここに内容が表示されます。</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-design" class="tab-panel">
+        <div class="grid-2">
+          <div>
+            <div class="panel">
+              <div class="toolbar">
+                <select id="placeholderType" style="width:150px">
+                  <option value="sender">贈り主</option>
+                  <option value="message">メッセージ</option>
+                  <option value="qr">QRコード</option>
+                  <option value="id">管理ID</option>
+                </select>
+                <button id="addPlaceholderBtn">プレースホルダー追加</button>
+                <button id="addTextBtn">固定テキスト追加</button>
+                <label>
+                  <input id="addImageInput" type="file" accept="image/*" class="hidden">
+                  <button id="addImageBtn" type="button">画像追加</button>
+                </label>
+                <span class="separator"></span>
+                <button id="moveBackBtn">背面へ</button>
+                <button id="moveFrontBtn">前面へ</button>
+                <button id="duplicateElementBtn">複製</button>
+                <button id="deleteElementBtn" class="danger">削除</button>
+              </div>
+              <div class="row wrap" style="margin-bottom:10px">
+                <div style="width:110px">
+                  <label class="small">プレビュー行</label>
+                  <select id="previewRowSelect"></select>
+                </div>
+                <div style="width:120px">
+                  <label class="small">背景色</label>
+                  <input id="cardBackground" type="color" value="#ffffff">
+                </div>
+                <div class="grow"></div>
+                <span class="badge">86 × 54mm</span>
+                <span class="small">ドラッグで移動・右下ハンドルでサイズ変更</span>
+              </div>
+              <div class="design-stage">
+                <div id="designCanvas"></div>
+              </div>
+            </div>
+          </div>
+
+          <aside>
+            <div class="panel">
+              <h3>テンプレート管理</h3>
+              <div class="row wrap">
+                <button id="exportTemplateBtn">JSONを書き出す</button>
+                <label>
+                  <input id="importTemplateInput" type="file" accept=".json,application/json" class="hidden">
+                  <button id="importTemplateBtn" type="button">JSONを読み込む</button>
+                </label>
+                <button id="restoreDefaultBtn">標準デザインに戻す</button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>フォント管理</h3>
+              <div class="field">
+                <label>ローカルフォントを読み込む（TTF / OTF / WOFF / WOFF2）</label>
+                <input id="fontFileInput" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" multiple>
+              </div>
+              <div class="hint">読み込んだフォントはこのブラウザ内で使用します。テンプレートJSONにはフォント名だけを保存します。</div>
+              <div id="fontManagerList" class="font-manager-list" style="margin-top:10px"></div>
+            </div>
+
+            <div class="panel">
+              <h3>要素一覧</h3>
+              <div id="elementList" class="element-list"></div>
+            </div>
+
+            <div class="panel">
+              <h3>選択要素の設定</h3>
+              <div id="noSelection" class="hint">カード上の要素を選択してください。</div>
+              <div id="elementInspector" class="hidden">
+                <div class="field">
+                  <label>名前</label>
+                  <input id="elName">
+                </div>
+                <div class="inspector-grid">
+                  <div class="field"><label>X（mm）</label><input id="elX" type="number" step="0.1"></div>
+                  <div class="field"><label>Y（mm）</label><input id="elY" type="number" step="0.1"></div>
+                  <div class="field"><label>幅（mm）</label><input id="elW" type="number" step="0.1"></div>
+                  <div class="field"><label>高さ（mm）</label><input id="elH" type="number" step="0.1"></div>
+                </div>
+                <div class="style-section">
+                  <div class="inspector-grid">
+                    <div class="field"><label>回転（°）</label><input id="elRotation" type="number" step="1"></div>
+                    <div class="field"><label>透明度（%）</label><input id="elOpacity" type="number" min="0" max="100" step="1"></div>
+                    <div class="field"><label>角丸（mm）</label><input id="elRadius" type="number" min="0" step="0.1"></div>
+                    <div class="field"><label>背景色</label><input id="elBgColor" type="color"></div>
+                  </div>
+                  <div class="field"><label><input id="elBgEnabled" type="checkbox"> 要素の背景色を表示</label></div>
+                  <div class="inspector-grid">
+                    <div class="field"><label>枠線色</label><input id="elBorderColor" type="color"></div>
+                    <div class="field"><label>枠線幅（mm）</label><input id="elBorderWidth" type="number" min="0" step="0.1"></div>
+                  </div>
+                </div>
+                <div id="textInspector" class="style-section">
+                  <div class="field"><label>固定テキスト / 前置き文字</label><textarea id="elText"></textarea></div>
+                  <div class="field"><label>フォント</label><select id="elFontFamily"></select></div>
+                  <div class="inspector-grid">
+                    <div class="field"><label>文字サイズ（pt）</label><input id="elFontSize" type="number" step="0.25"></div>
+                    <div class="field"><label>最小サイズ（pt）</label><input id="elMinFont" type="number" step="0.25"></div>
+                    <div class="field"><label>字間・カーニング（em）</label><input id="elLetterSpacing" type="number" step="0.01"></div>
+                    <div class="field"><label>行間</label><input id="elLineHeight" type="number" step="0.05"></div>
+                    <div class="field"><label>太さ</label><select id="elWeight"><option value="300">細字</option><option value="400">標準</option><option value="500">中</option><option value="600">太め</option><option value="700">太字</option><option value="800">極太</option></select></div>
+                    <div class="field"><label>文字色</label><input id="elColor" type="color"></div>
+                    <div class="field"><label>横揃え</label><select id="elAlign"><option value="left">左</option><option value="center">中央</option><option value="right">右</option><option value="justify">両端</option></select></div>
+                    <div class="field"><label>縦揃え</label><select id="elVAlign"><option value="flex-start">上</option><option value="center">中央</option><option value="flex-end">下</option></select></div>
+                  </div>
+                  <div class="field"><label><input id="elItalic" type="checkbox"> イタリック</label></div>
+                  <div class="field"><label><input id="elAutoFit" type="checkbox"> 枠内に収まるまで自動縮小</label></div>
+                </div>
+                <div id="imageInspector" class="hidden style-section">
+                  <div class="field"><label>画像URL・QR内容</label><textarea id="elImageSource"></textarea></div>
+                  <div class="field"><label>画像の表示方法</label><select id="elObjectFit"><option value="contain">全体を表示</option><option value="cover">枠いっぱいにトリミング</option><option value="fill">枠に合わせて変形</option></select></div>
+                  <div class="inspector-grid"><div class="field"><label>横位置（%）</label><input id="elObjectX" type="number" min="0" max="100" step="1"></div><div class="field"><label>縦位置（%）</label><input id="elObjectY" type="number" min="0" max="100" step="1"></div></div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="tab-print" class="tab-panel">
+        <div class="panel print-toolbar">
+          <div class="row wrap">
+            <button id="refreshLayoutBtn">配置を更新</button>
+            <button id="printBtn" class="primary">印刷 / PDF保存</button>
+            <label class="row"><input id="showFrames" type="checkbox" checked> テスト枠を表示</label>
+            <div style="width:120px"><label class="small">横補正（mm）</label><input id="offsetX" type="number" step="0.1" value="0"></div>
+            <div style="width:120px"><label class="small">縦補正（mm）</label><input id="offsetY" type="number" step="0.1" value="0"></div>
+            <span id="layoutSummary" class="badge">0件 / 0ページ</span>
+          </div>
+          <div class="footer-note">
+            印刷設定は「A4」「倍率100% / 実際のサイズ」「余白なし・自動拡大縮小なし」にしてください。背景色や画像を使う場合は、ブラウザの「背景のグラフィック」をONにします。
+          </div>
+        </div>
+
+        <div class="print-layout-grid" style="margin-top:16px">
+          <div id="printArea">
+            <div class="empty-state">CSVを読み込んで「配置を更新」を押してください。</div>
+          </div>
+
+          <aside>
+            <div class="panel">
+              <h3>カード個別調整</h3>
+              <div id="noPrintSelection" class="hint">印刷プレビュー上のカードをクリックしてください。</div>
+              <div id="printInspector" class="hidden">
+                <div id="selectedRecordBadge" class="record-badge"></div>
+                <div class="field">
+                  <label>調整する要素</label>
+                  <select id="overrideElementSelect"></select>
+                </div>
+                <div class="field">
+                  <label>内容を個別に上書き</label>
+                  <textarea id="ovContent" placeholder="空欄ならCSVまたはテンプレートの内容を使用"></textarea>
+                </div>
+                <div class="inspector-grid">
+                  <div class="field"><label>X（mm）</label><input id="ovX" type="number" step="0.1"></div>
+                  <div class="field"><label>Y（mm）</label><input id="ovY" type="number" step="0.1"></div>
+                  <div class="field"><label>幅（mm）</label><input id="ovW" type="number" step="0.1"></div>
+                  <div class="field"><label>高さ（mm）</label><input id="ovH" type="number" step="0.1"></div>
+                  <div class="field"><label>文字サイズ（pt）</label><input id="ovFontSize" type="number" step="0.25"></div>
+                  <div class="field"><label>最小サイズ（pt）</label><input id="ovMinFont" type="number" step="0.25"></div>
+                </div>
+                <div class="row wrap">
+                  <button id="saveOverrideBtn" class="primary">このカードだけ反映</button>
+                  <button id="resetOverrideBtn">個別調整を解除</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>自動縮小について</h3>
+              <div class="hint warning">
+                テンプレートで「自動縮小」をONにしたテキストは、枠内に収まるまで0.25ptずつ縮小します。最小サイズでも収まらないカードには、プレビュー上で「!」を表示します。
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  const MM_TO_PX = 10;
+  const SCREEN_MM_TO_PX = 96 / 25.4;
+  const PAGE_SCALE = 0.52;
+  const CARD_POSITIONS = [
+    {x:14,  y:25.5}, {x:110, y:25.5},
+    {x:14,  y:89.5}, {x:110, y:89.5},
+    {x:14,  y:153.5},{x:110, y:153.5},
+    {x:14,  y:217.5},{x:110, y:217.5}
+  ];
+
+  const DEFAULT_TEMPLATE = {
+    version: 1,
+    width: 86,
+    height: 54,
+    background: "#ffffff",
+    elements: [
+      {
+        id:"title", name:"固定見出し", type:"text", field:null,
+        text:"この一杯は、", x:6, y:5, w:52, h:6,
+        fontSize:9.5, minFont:7, lineHeight:1.2, weight:"600",
+        align:"left", valign:"center", autoFit:false
+      },
+      {
+        id:"message", name:"メッセージ", type:"text", field:"message",
+        text:"", x:6, y:13, w:52, h:24,
+        fontSize:10, minFont:6, lineHeight:1.35, weight:"400",
+        align:"left", valign:"flex-start", autoFit:true
+      },
+      {
+        id:"sender", name:"贈り主", type:"text", field:"sender",
+        text:"贈り主：", x:6, y:40.5, w:52, h:6,
+        fontSize:7.5, minFont:6, lineHeight:1.2, weight:"500",
+        align:"left", valign:"center", autoFit:true
+      },
+      {
+        id:"qr", name:"QRコード", type:"image", field:"qr",
+        text:"", src:"", x:64, y:19, w:17, h:17
+      },
+      {
+        id:"qr-note", name:"QR案内", type:"text", field:null,
+        text:"QRコードを読み取ってください", x:60, y:38, w:25, h:5,
+        fontSize:5.5, minFont:4.5, lineHeight:1.1, weight:"400",
+        align:"center", valign:"center", autoFit:true
+      }
+    ]
+  };
+
+  const state = {
+    template: loadJSON("cls-template") || structuredClone(DEFAULT_TEMPLATE),
+    overrides: loadJSON("cls-overrides") || {},
+    settings: loadJSON("cls-settings") || {showFrames:true, offsetX:0, offsetY:0},
+    rawRows: [],
+    headers: [],
+    rows: [],
+    mapping: {id:"", sender:"", message:"", qr:""},
+    selectedElementId: null,
+    previewRowIndex: 0,
+    selectedPrintUid: null,
+    selectedPrintElementId: null,
+    loadedFonts: []
+  };
+
+  const $ = id => document.getElementById(id);
+  const $$ = sel => [...document.querySelectorAll(sel)];
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+  const clone = value => JSON.parse(JSON.stringify(value));
+
+  function structuredCloneFallback(value){
+    return window.structuredClone ? window.structuredClone(value) : clone(value);
+  }
+  if (!window.structuredClone) window.structuredClone = structuredCloneFallback;
+
+  function loadJSON(key){
+    try { return JSON.parse(window.localStorage.getItem(key)); } catch { return null; }
+  }
+  function saveLocal(){
+    try {
+      window.localStorage.setItem("cls-template", JSON.stringify(state.template));
+      window.localStorage.setItem("cls-overrides", JSON.stringify(state.overrides));
+      window.localStorage.setItem("cls-settings", JSON.stringify(state.settings));
+      $("saveStatus").textContent = "ローカル保存済み";
+      $("saveStatus").style.background = "#eef6f0";
+    } catch {
+      $("saveStatus").textContent = "保存不可（この画面中は利用可）";
+      $("saveStatus").style.background = "#fff1f1";
+    }
+  }
+  function markDirty(){
+    $("saveStatus").textContent = "保存中…";
+    $("saveStatus").style.background = "#fff8e5";
+    clearTimeout(markDirty.t);
+    markDirty.t = setTimeout(saveLocal, 250);
+  }
+
+  function switchTab(name){
+    $$(".tab-button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+    $$(".tab-panel").forEach(p => p.classList.toggle("active", p.id === "tab-" + name));
+    if (name === "design") renderDesign();
+    if (name === "print") renderPrintLayout();
+  }
+
+  function detectDelimiter(text){
+    const first = text.split(/\r?\n/).find(line => line.trim()) || "";
+    const counts = {
+      ",": countOutsideQuotes(first, ","),
+      "\t": countOutsideQuotes(first, "\t"),
+      ";": countOutsideQuotes(first, ";")
+    };
+    return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+  }
+  function countOutsideQuotes(line, token){
+    let q=false,c=0;
+    for (let i=0;i<line.length;i++){
+      if (line[i]==='"') {
+        if (q && line[i+1]==='"') i++;
+        else q=!q;
+      } else if (!q && line[i]===token) c++;
+    }
+    return c;
+  }
+  function parseCSV(text){
+    text = text.replace(/^\uFEFF/,"");
+    const delimiter = detectDelimiter(text);
+    const rows = [];
+    let row=[], cell="", quoted=false;
+    for (let i=0;i<text.length;i++){
+      const ch=text[i];
+      if (quoted){
+        if (ch === '"'){
+          if (text[i+1] === '"'){ cell += '"'; i++; }
+          else quoted=false;
+        } else cell += ch;
+      } else {
+        if (ch === '"') quoted=true;
+        else if (ch === delimiter){ row.push(cell); cell=""; }
+        else if (ch === "\n"){
+          row.push(cell); rows.push(row); row=[]; cell="";
+        } else if (ch !== "\r") cell += ch;
+      }
+    }
+    row.push(cell);
+    if (row.some(v=>v!=="")) rows.push(row);
+    const headers = (rows.shift() || []).map((h,i)=>h.trim() || "列" + (i+1));
+    return {
+      headers,
+      rows: rows.filter(r=>r.some(v=>String(v).trim()!=="")).map(r => {
+        const obj={};
+        headers.forEach((h,i)=>obj[h]=r[i] ?? "");
+        return obj;
+      })
+    };
+  }
+
+  function decodeCsv(buffer, mode){
+    if (mode === "utf-8") return new TextDecoder("utf-8").decode(buffer);
+    if (mode === "shift-jis") return new TextDecoder("shift-jis").decode(buffer);
+    const utf = new TextDecoder("utf-8").decode(buffer);
+    const bad = (utf.match(/\uFFFD/g)||[]).length;
+    if (bad === 0) return utf;
+    try { return new TextDecoder("shift-jis").decode(buffer); } catch { return utf; }
+  }
+
+  function autoMap(headers, type){
+    const sets = {
+      id:["id","管理id","管理番号","番号","no","コード"],
+      sender:["贈り主","送り主","sender","from","お名前","氏名","名前"],
+      message:["メッセージ","message","コメント","本文","ひとこと"],
+      qr:["qrコード","qr","qr_url","qr画像","画像url","url","リンク"]
+    };
+    const norm = s => String(s).toLowerCase().replace(/[\s_\-・]/g,"");
+    const candidates = sets[type].map(norm);
+    return headers.find(h => candidates.includes(norm(h))) ||
+      headers.find(h => candidates.some(c => norm(h).includes(c))) || "";
+  }
+
+  function populateMapping(){
+    ["Id","Sender","Message","Qr"].forEach(name => {
+      const sel = $("map"+name);
+      const key = name.toLowerCase();
+      sel.innerHTML = '<option value="">（未指定）</option>' +
+        state.headers.map(h=>`<option value="${escapeAttr(h)}">${escapeHtml(h)}</option>`).join("");
+      const mapped = autoMap(state.headers, key);
+      sel.value = mapped;
+    });
+    $("mappingPanel").classList.remove("hidden");
+  }
+
+  function applyMapping(){
+    state.mapping = {
+      id:$("mapId").value,
+      sender:$("mapSender").value,
+      message:$("mapMessage").value,
+      qr:$("mapQr").value
+    };
+    state.rows = state.rawRows.map((r,i) => ({
+      ...r,
+      id: state.mapping.id ? String(r[state.mapping.id] ?? "") : String(i+1),
+      sender: state.mapping.sender ? String(r[state.mapping.sender] ?? "") : "",
+      message: state.mapping.message ? String(r[state.mapping.message] ?? "") : "",
+      qr: state.mapping.qr ? String(r[state.mapping.qr] ?? "") : "",
+      __uid: uid(),
+      __enabled: true
+    }));
+    state.previewRowIndex = 0;
+    state.selectedPrintUid = null;
+    renderData();
+    renderPreviewRowSelect();
+    renderDesign();
+    renderPrintLayout();
+  }
+
+  function renderData(){
+    $("rowCount").textContent = state.rows.length;
+    const enabled = state.rows.filter(r=>r.__enabled).length;
+    $("enabledCount").textContent = enabled;
+    $("pageCount").textContent = Math.ceil(enabled/8);
+    if (!state.rows.length){
+      $("dataTableWrap").className="empty-state";
+      $("dataTableWrap").textContent="CSVを読み込むと、ここに内容が表示されます。";
+      return;
+    }
+    const wrap = document.createElement("div");
+    wrap.className="table-wrap";
+    const table = document.createElement("table");
+    table.innerHTML = `
+      <thead><tr>
+        <th>印刷</th><th>No.</th><th>ID</th><th>贈り主</th><th>メッセージ</th><th>QR</th>
+      </tr></thead>
+      <tbody></tbody>`;
+    const tbody=table.querySelector("tbody");
+    state.rows.forEach((r,i)=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td><input type="checkbox" data-enable="${i}" ${r.__enabled?"checked":""}></td>
+        <td>${i+1}</td>
+        <td>${escapeHtml(r.id)}</td>
+        <td>${escapeHtml(r.sender)}</td>
+        <td class="message-cell">${escapeHtml(r.message)}</td>
+        <td>${r.qr ? "あり" : "なし"}</td>`;
+      tr.addEventListener("click",e=>{
+        if (e.target.matches("input")) return;
+        state.previewRowIndex=i;
+        $("previewRowSelect").value=String(i);
+        switchTab("design");
+      });
+      tbody.appendChild(tr);
+    });
+    wrap.appendChild(table);
+    $("dataTableWrap").className="";
+    $("dataTableWrap").innerHTML="";
+    $("dataTableWrap").appendChild(wrap);
+    $$("[data-enable]").forEach(cb => cb.addEventListener("change",e=>{
+      state.rows[Number(e.target.dataset.enable)].__enabled=e.target.checked;
+      renderData();
+      renderPrintLayout();
+    }));
+  }
+
+  function renderPreviewRowSelect(){
+    const sel=$("previewRowSelect");
+    if (!state.rows.length){
+      sel.innerHTML='<option value="0">サンプル表示</option>';
+      sel.disabled=true;
+      return;
+    }
+    sel.disabled=false;
+    sel.innerHTML=state.rows.map((r,i)=>`<option value="${i}">${i+1}. ${escapeHtml(r.sender || r.id || "名称なし")}</option>`).join("");
+    sel.value=String(Math.min(state.previewRowIndex,state.rows.length-1));
+  }
+
+  function currentPreviewRow(){
+    return state.rows[state.previewRowIndex] || {id:"AG001",sender:"田中太郎",message:"ここにメッセージが入ります。長文の場合は自動的に文字を小さくできます。",qr:"https://quickchart.io/qr?text=https%3A%2F%2Fexample.com%2FAG001&size=600"};
+  }
+
+  function resolveText(el,row,override){
+    if (override && Object.prototype.hasOwnProperty.call(override,"content") && override.content !== "") return override.content;
+    if (el.field){
+      const value = row?.[el.field] ?? "";
+      return (el.text || "") + value;
+    }
+    return el.text || "";
+  }
+
+  function extractImageSource(value){
+    const raw=String(value || "").trim();
+    if (!raw) return "";
+    if (/^data:image\//i.test(raw) || /^blob:/i.test(raw)) return raw;
+    const imageFormula = raw.match(/=IMAGE\(\s*"([^"]+)"/i);
+    if (imageFormula) return imageFormula[1].replace(/&amp;/g,"&");
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return "https://quickchart.io/qr?size=600&margin=1&text=" + encodeURIComponent(raw);
+  }
+
+  function effectiveElement(el,row){
+    const ov = state.overrides[row?.__uid]?.[el.id] || {};
+    return {...el,...ov,__override:ov};
+  }
+
+  function renderDesign(){
+    $("cardBackground").value=state.template.background || "#ffffff";
+    const canvas=$("designCanvas");
+    canvas.style.background=state.template.background || "#ffffff";
+    canvas.innerHTML="";
+    const row=currentPreviewRow();
+    state.template.elements.forEach(el=>{
+      const node=document.createElement("div");
+      node.className="template-element" + (state.selectedElementId===el.id?" selected":"");
+      node.dataset.id=el.id;
+      Object.assign(node.style,{
+        left:(el.x*MM_TO_PX)+"px",
+        top:(el.y*MM_TO_PX)+"px",
+        width:(el.w*MM_TO_PX)+"px",
+        height:(el.h*MM_TO_PX)+"px",
+        zIndex:String(state.template.elements.indexOf(el)+1)
+      });
+      const chip=document.createElement("span");
+      chip.className="element-chip";
+      chip.textContent=el.name || el.field || el.type;
+      node.appendChild(chip);
+
+      if (el.type==="text"){
+        const inner=document.createElement("div");
+        inner.className="element-text";
+        inner.textContent=resolveText(el,row,null) || (el.field ? "{{"+el.field+"}}" : "テキスト");
+        applyTextStyles(inner,el);
+        node.appendChild(inner);
+      } else {
+        const img=document.createElement("img");
+        const source=el.field ? row?.[el.field] : el.src;
+        img.src=extractImageSource(source) || svgPlaceholder(el.name || "画像");
+        img.style.objectFit=el.objectFit || "contain";
+        img.style.objectPosition=`${el.objectX ?? 50}% ${el.objectY ?? 50}%`;
+        img.onerror=()=>{img.src=svgPlaceholder("画像");};
+        node.appendChild(img);
+      }
+      applyCommonElementStyles(node,el);
+      const handle=document.createElement("span");
+      handle.className="resize-handle";
+      node.appendChild(handle);
+
+      node.addEventListener("pointerdown",e=>beginElementPointer(e,el, e.target.classList.contains("resize-handle") ? "resize":"drag"));
+      node.addEventListener("click",e=>{e.stopPropagation();selectElement(el.id);});
+      canvas.appendChild(node);
+    });
+    canvas.onclick=()=>selectElement(null);
+    renderElementList();
+    renderInspector();
+  }
+
+  function valignToJustify(v){ return v==="center"?"center":v==="flex-end"?"flex-end":"flex-start"; }
+  function valignToAlignItems(){ return "stretch"; }
+
+  const SYSTEM_FONTS = [
+    {name:"システム標準", value:'-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",Meiryo,sans-serif'},
+    {name:"游ゴシック", value:'"Yu Gothic","YuGothic",sans-serif'},
+    {name:"游明朝", value:'"Yu Mincho","YuMincho",serif'},
+    {name:"メイリオ", value:'Meiryo,sans-serif'},
+    {name:"ヒラギノ角ゴ", value:'"Hiragino Kaku Gothic ProN",sans-serif'},
+    {name:"ヒラギノ明朝", value:'"Hiragino Mincho ProN",serif'},
+    {name:"Noto Sans JP", value:'"Noto Sans JP",sans-serif'},
+    {name:"Noto Serif JP", value:'"Noto Serif JP",serif'},
+    {name:"Arial", value:'Arial,sans-serif'},
+    {name:"Georgia", value:'Georgia,serif'}
+  ];
+  function applyCommonElementStyles(node, el){
+    node.style.transform=`rotate(${Number(el.rotation||0)}deg)`;node.style.transformOrigin="center center";node.style.opacity=String((el.opacity??100)/100);node.style.borderRadius=(Number(el.radius||0))+"mm";node.style.background=el.bgEnabled?(el.bgColor||"#ffffff"):"transparent";const bw=Number(el.borderWidth||0);node.style.borderStyle=bw>0?"solid":"none";node.style.borderWidth=bw+"mm";node.style.borderColor=el.borderColor||"#000000";
+  }
+  function applyTextStyles(node, el){Object.assign(node.style,{fontFamily:el.fontFamily||SYSTEM_FONTS[0].value,fontSize:(el.fontSize||10)+"pt",lineHeight:String(el.lineHeight||1.2),fontWeight:String(el.weight||"400"),fontStyle:el.italic?"italic":"normal",letterSpacing:(Number(el.letterSpacing||0))+"em",color:el.color||"#1f2328",textAlign:el.align||"left",justifyContent:valignToJustify(el.valign),alignItems:valignToAlignItems(el.valign)});}
+  function populateFontSelect(){const sel=$("elFontFamily");if(!sel)return;const current=selectedElement()?.fontFamily||SYSTEM_FONTS[0].value;const options=[...SYSTEM_FONTS,...state.loadedFonts.map(f=>({name:f.name+"（読込）",value:`"${f.family}"`}))];sel.innerHTML=options.map(f=>`<option value="${escapeAttr(f.value)}">${escapeHtml(f.name)}</option>`).join("");if(![...sel.options].some(o=>o.value===current)){const opt=document.createElement("option");opt.value=current;opt.textContent=current+"（テンプレート指定）";sel.appendChild(opt);}sel.value=current;}
+  async function loadFontFiles(files){for(const file of files){try{const buffer=await file.arrayBuffer();const family="CLSFont_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);const face=new FontFace(family,buffer);await face.load();document.fonts.add(face);state.loadedFonts.push({name:file.name.replace(/\.[^.]+$/,""),family});}catch(err){alert(`${file.name} を読み込めませんでした。\n${err.message}`);}}renderFontManager();populateFontSelect();}
+  function renderFontManager(){const list=$("fontManagerList");if(!list)return;const rows=[...SYSTEM_FONTS.map(f=>({name:f.name,kind:"端末",value:f.value})),...state.loadedFonts.map(f=>({name:f.name,kind:"読込",value:`"${f.family}"`}))];list.innerHTML=rows.map(f=>`<div class="font-item"><span style="font-family:${escapeAttr(f.value)}">${escapeHtml(f.name)}</span><span class="badge">${f.kind}</span></div>`).join("");}
+
+  function beginElementPointer(e,el,mode){
+    e.preventDefault();e.stopPropagation();
+    selectElement(el.id);
+    const start={clientX:e.clientX,clientY:e.clientY,x:el.x,y:el.y,w:el.w,h:el.h};
+    const move=ev=>{
+      const dx=(ev.clientX-start.clientX)/MM_TO_PX;
+      const dy=(ev.clientY-start.clientY)/MM_TO_PX;
+      if (mode==="drag"){
+        el.x=round(clamp(start.x+dx,0,state.template.width-el.w),1);
+        el.y=round(clamp(start.y+dy,0,state.template.height-el.h),1);
+      } else {
+        el.w=round(clamp(start.w+dx,2,state.template.width-el.x),1);
+        el.h=round(clamp(start.h+dy,2,state.template.height-el.y),1);
+      }
+      renderDesign();
+      markDirty();
+    };
+    const up=()=>{
+      window.removeEventListener("pointermove",move);
+      window.removeEventListener("pointerup",up);
+    };
+    window.addEventListener("pointermove",move);
+    window.addEventListener("pointerup",up);
+  }
+
+  function selectElement(id){
+    state.selectedElementId=id;
+    renderDesign();
+  }
+
+  function renderElementList(){
+    const list=$("elementList");
+    list.innerHTML="";
+    [...state.template.elements].reverse().forEach(el=>{
+      const btn=document.createElement("button");
+      btn.textContent=(el.type==="image"?"画像：":"文字：")+(el.name || el.field || "名称なし");
+      btn.classList.toggle("active",state.selectedElementId===el.id);
+      btn.onclick=()=>selectElement(el.id);
+      list.appendChild(btn);
+    });
+  }
+
+  function selectedElement(){
+    return state.template.elements.find(e=>e.id===state.selectedElementId) || null;
+  }
+
+  function renderInspector(){
+    const el=selectedElement();
+    $("noSelection").classList.toggle("hidden",!!el);
+    $("elementInspector").classList.toggle("hidden",!el);
+    if (!el) return;
+    $("elName").value=el.name || "";$("elX").value=el.x;$("elY").value=el.y;$("elW").value=el.w;$("elH").value=el.h;$("elRotation").value=el.rotation||0;$("elOpacity").value=el.opacity??100;$("elRadius").value=el.radius||0;$("elBgColor").value=el.bgColor||"#ffffff";$("elBgEnabled").checked=!!el.bgEnabled;$("elBorderColor").value=el.borderColor||"#000000";$("elBorderWidth").value=el.borderWidth||0;const isText=el.type==="text";
+    $("textInspector").classList.toggle("hidden",!isText);
+    $("imageInspector").classList.toggle("hidden",isText);
+    if (isText){
+      $("elText").value=el.text||"";populateFontSelect();$("elFontSize").value=el.fontSize||10;$("elMinFont").value=el.minFont||6;$("elLetterSpacing").value=el.letterSpacing||0;$("elLineHeight").value=el.lineHeight||1.2;$("elWeight").value=String(el.weight||"400");$("elColor").value=el.color||"#1f2328";$("elAlign").value=el.align||"left";$("elVAlign").value=el.valign||"flex-start";$("elItalic").checked=!!el.italic;$("elAutoFit").checked=!!el.autoFit;
+    } else {$("elImageSource").value=el.field?"{{"+el.field+"}}":(el.src||"");$("elObjectFit").value=el.objectFit||"contain";$("elObjectX").value=el.objectX??50;$("elObjectY").value=el.objectY??50;}
+  }
+
+  function bindInspector(){
+    const common = {
+      elName:["name","string"], elX:["x","number"], elY:["y","number"],
+      elW:["w","number"], elH:["h","number"], elText:["text","string"],
+      elFontSize:["fontSize","number"], elMinFont:["minFont","number"], elLetterSpacing:["letterSpacing","number"], elLineHeight:["lineHeight","number"], elWeight:["weight","string"], elColor:["color","string"], elFontFamily:["fontFamily","string"], elAlign:["align","string"], elVAlign:["valign","string"], elRotation:["rotation","number"], elOpacity:["opacity","number"], elRadius:["radius","number"], elBgColor:["bgColor","string"], elBorderColor:["borderColor","string"], elBorderWidth:["borderWidth","number"], elObjectFit:["objectFit","string"], elObjectX:["objectX","number"], elObjectY:["objectY","number"]
+    };
+    Object.entries(common).forEach(([id,[prop,type]])=>{
+      $(id).addEventListener("change",e=>{
+        const el=selectedElement(); if(!el)return;
+        el[prop]=type==="number"?Number(e.target.value):e.target.value;
+        sanitizeElement(el);
+        renderDesign();markDirty();
+      });
+    });
+    $("elAutoFit").addEventListener("change",e=>{
+      const el=selectedElement();if(!el)return;
+      el.autoFit=e.target.checked;renderDesign();markDirty();
+    });
+    $("elItalic").addEventListener("change",e=>{const el=selectedElement();if(!el)return;el.italic=e.target.checked;renderDesign();markDirty();});
+    $("elBgEnabled").addEventListener("change",e=>{const el=selectedElement();if(!el)return;el.bgEnabled=e.target.checked;renderDesign();markDirty();});
+    $("elImageSource").addEventListener("change",e=>{
+      const el=selectedElement();if(!el || el.field)return;
+      el.src=e.target.value;renderDesign();markDirty();
+    });
+  }
+
+  function sanitizeElement(el){
+    el.x=clamp(Number(el.x)||0,0,state.template.width-1);
+    el.y=clamp(Number(el.y)||0,0,state.template.height-1);
+    el.w=clamp(Number(el.w)||2,2,state.template.width-el.x);
+    el.h=clamp(Number(el.h)||2,2,state.template.height-el.y);
+    el.rotation=clamp(Number(el.rotation)||0,-360,360);el.opacity=clamp(Number(el.opacity??100),0,100);el.radius=clamp(Number(el.radius)||0,0,50);el.borderWidth=clamp(Number(el.borderWidth)||0,0,10);if(el.type==="text"){el.fontSize=clamp(Number(el.fontSize)||10,2,72);el.minFont=clamp(Number(el.minFont)||4,2,el.fontSize);el.letterSpacing=clamp(Number(el.letterSpacing)||0,-0.5,2);el.lineHeight=clamp(Number(el.lineHeight)||1.2,.7,3);}else{el.objectX=clamp(Number(el.objectX??50),0,100);el.objectY=clamp(Number(el.objectY??50),0,100);}
+  }
+
+  function addPlaceholder(field){
+    const isImage=field==="qr";
+    const el=isImage ? {
+      id:uid(),name:"QRコード",type:"image",field:"qr",src:"",
+      x:64,y:18,w:18,h:18
+    } : {
+      id:uid(),name:fieldLabel(field),type:"text",field,text:field==="sender"?"贈り主：":"",
+      x:8,y:8,w:45,h:10,fontSize:9,minFont:6,lineHeight:1.25,weight:"400",
+      align:"left",valign:"flex-start",autoFit:true
+    };
+    state.template.elements.push(el);
+    state.selectedElementId=el.id;
+    renderDesign();markDirty();
+  }
+
+  function addText(){
+    const el={
+      id:uid(),name:"固定テキスト",type:"text",field:null,text:"テキスト",
+      x:8,y:8,w:35,h:8,fontSize:9,minFont:6,lineHeight:1.2,weight:"400",
+      align:"left",valign:"flex-start",autoFit:false
+    };
+    state.template.elements.push(el);
+    state.selectedElementId=el.id;
+    renderDesign();markDirty();
+  }
+
+  function addImageFile(file){
+    if (!file) return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const el={id:uid(),name:file.name,type:"image",field:null,src:reader.result,x:8,y:8,w:25,h:20};
+      state.template.elements.push(el);
+      state.selectedElementId=el.id;
+      renderDesign();markDirty();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function fieldLabel(field){
+    return ({sender:"贈り主",message:"メッセージ",qr:"QRコード",id:"管理ID"})[field] || field;
+  }
+
+  function renderPrintLayout(){
+    const area=$("printArea");
+    const rows=state.rows.filter(r=>r.__enabled);
+    $("layoutSummary").textContent=`${rows.length}件 / ${Math.ceil(rows.length/8)}ページ`;
+    state.settings.showFrames=$("showFrames").checked;
+    state.settings.offsetX=Number($("offsetX").value)||0;
+    state.settings.offsetY=Number($("offsetY").value)||0;
+    markDirty();
+
+    if (!rows.length){
+      area.innerHTML='<div class="empty-state">印刷対象のデータがありません。</div>';
+      updatePrintInspector();
+      return;
+    }
+    area.innerHTML="";
+    for (let p=0;p<Math.ceil(rows.length/8);p++){
+      const shell=document.createElement("div");
+      shell.className="page-shell";
+      shell.style.width=(210*SCREEN_MM_TO_PX*PAGE_SCALE)+"px";
+      shell.style.height=(297*SCREEN_MM_TO_PX*PAGE_SCALE)+"px";
+      const page=document.createElement("div");
+      page.className="print-page";
+      for (let slot=0;slot<8;slot++){
+        const row=rows[p*8+slot];
+        if (!row) continue;
+        const pos=CARD_POSITIONS[slot];
+        const card=document.createElement("div");
+        card.className="print-card "+(state.settings.showFrames?"frame-on ":"")+(state.selectedPrintUid===row.__uid?"selected ":"");
+        card.style.left=(pos.x+state.settings.offsetX)+"mm";
+        card.style.top=(pos.y+state.settings.offsetY)+"mm";
+        card.style.background=state.template.background || "#fff";
+        card.dataset.uid=row.__uid;
+        card.addEventListener("click",e=>{
+          e.stopPropagation();
+          state.selectedPrintUid=row.__uid;
+          if (!state.selectedPrintElementId || !state.template.elements.some(el=>el.id===state.selectedPrintElementId)){
+            state.selectedPrintElementId=state.template.elements.find(el=>el.field==="message")?.id || state.template.elements[0]?.id;
+          }
+          renderPrintLayout();
+          updatePrintInspector();
+        });
+        state.template.elements.forEach((baseEl,z)=>{
+          const el=effectiveElement(baseEl,row);
+          const node=document.createElement("div");
+          node.className="print-element "+el.type+(el.autoFit?" autofit-text":"");
+          node.dataset.minFont=String(el.minFont || 4);
+          node.style.left=el.x+"mm";
+          node.style.top=el.y+"mm";
+          node.style.width=el.w+"mm";
+          node.style.height=el.h+"mm";
+          node.style.zIndex=String(z+1);
+          if (el.type==="text"){node.textContent=resolveText(baseEl,row,el.__override);applyTextStyles(node,el);} else {const img=document.createElement("img");const raw=(el.__override&&el.__override.content!==undefined&&el.__override.content!=="")?el.__override.content:(baseEl.field?row[baseEl.field]:baseEl.src);img.src=extractImageSource(raw)||svgPlaceholder(baseEl.name||"画像");img.style.objectFit=el.objectFit||"contain";img.style.objectPosition=`${el.objectX ?? 50}% ${el.objectY ?? 50}%`;img.onerror=()=>{img.src=svgPlaceholder("画像なし");};node.appendChild(img);}applyCommonElementStyles(node,el);card.appendChild(node);
+        });
+        page.appendChild(card);
+      }
+      shell.appendChild(page);
+      area.appendChild(shell);
+    }
+    requestAnimationFrame(()=>applyAutoFit(area));
+    updatePrintInspector();
+  }
+
+  function applyAutoFit(root){
+    root.querySelectorAll(".print-card").forEach(card=>card.classList.remove("has-overflow"));
+    root.querySelectorAll(".autofit-text").forEach(el=>{
+      let size=parseFloat(getComputedStyle(el).fontSize) * 72 / 96;
+      const min=parseFloat(el.dataset.minFont)||4;
+      let guard=0;
+      while ((el.scrollHeight > el.clientHeight+1 || el.scrollWidth > el.clientWidth+1) && size>min && guard<160){
+        size=Math.max(min,size-.25);
+        el.style.fontSize=size+"pt";
+        guard++;
+      }
+      if (el.scrollHeight > el.clientHeight+1 || el.scrollWidth > el.clientWidth+1){
+        el.closest(".print-card")?.classList.add("has-overflow");
+      }
+    });
+  }
+
+  function updatePrintInspector(){
+    const row=state.rows.find(r=>r.__uid===state.selectedPrintUid);
+    $("noPrintSelection").classList.toggle("hidden",!!row);
+    $("printInspector").classList.toggle("hidden",!row);
+    if (!row) return;
+    $("selectedRecordBadge").textContent=`${row.id || "IDなし"} / ${row.sender || "贈り主なし"}`;
+    const sel=$("overrideElementSelect");
+    sel.innerHTML=state.template.elements.map(el=>`<option value="${el.id}">${escapeHtml(el.name || el.field || el.id)}</option>`).join("");
+    if (!state.selectedPrintElementId) state.selectedPrintElementId=state.template.elements[0]?.id;
+    sel.value=state.selectedPrintElementId;
+    loadOverrideFields();
+  }
+
+  function loadOverrideFields(){
+    const row=state.rows.find(r=>r.__uid===state.selectedPrintUid);
+    const base=state.template.elements.find(el=>el.id===state.selectedPrintElementId);
+    if (!row || !base) return;
+    const ov=state.overrides[row.__uid]?.[base.id] || {};
+    const eff={...base,...ov};
+    $("ovContent").value=Object.prototype.hasOwnProperty.call(ov,"content") ? ov.content : "";
+    $("ovX").value=eff.x;
+    $("ovY").value=eff.y;
+    $("ovW").value=eff.w;
+    $("ovH").value=eff.h;
+    $("ovFontSize").value=base.type==="text" ? (eff.fontSize || 10) : "";
+    $("ovMinFont").value=base.type==="text" ? (eff.minFont || 4) : "";
+    $("ovFontSize").disabled=base.type!=="text";
+    $("ovMinFont").disabled=base.type!=="text";
+  }
+
+  function saveOverride(){
+    const row=state.rows.find(r=>r.__uid===state.selectedPrintUid);
+    const base=state.template.elements.find(el=>el.id===state.selectedPrintElementId);
+    if (!row || !base) return;
+    state.overrides[row.__uid] ||= {};
+    state.overrides[row.__uid][base.id] = {
+      content:$("ovContent").value,
+      x:Number($("ovX").value),
+      y:Number($("ovY").value),
+      w:Number($("ovW").value),
+      h:Number($("ovH").value),
+      ...(base.type==="text" ? {
+        fontSize:Number($("ovFontSize").value),
+        minFont:Number($("ovMinFont").value)
+      } : {})
+    };
+    markDirty();
+    renderPrintLayout();
+  }
+
+  function resetOverride(){
+    const row=state.rows.find(r=>r.__uid===state.selectedPrintUid);
+    if (!row) return;
+    if (state.overrides[row.__uid]) {
+      delete state.overrides[row.__uid][state.selectedPrintElementId];
+      if (!Object.keys(state.overrides[row.__uid]).length) delete state.overrides[row.__uid];
+    }
+    markDirty();renderPrintLayout();
+  }
+
+  function downloadBlob(filename,content,type){
+    const blob=new Blob([content],{type});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=filename;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }
+
+  function escapeHtml(v){
+    return String(v ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  function escapeAttr(v){ return escapeHtml(v); }
+  function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+  function round(v,d=1){const p=10**d;return Math.round(v*p)/p;}
+  function svgPlaceholder(label){
+    const safe=String(label||"").replace(/[<>&'"]/g,"");
+    return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">
+        <rect width="100%" height="100%" fill="#f3f4f6"/>
+        <rect x="8" y="8" width="284" height="284" fill="none" stroke="#c8cdd3" stroke-width="4"/>
+        <text x="150" y="155" text-anchor="middle" font-family="sans-serif" font-size="24" fill="#737b84">${safe}</text>
+      </svg>`
+    );
+  }
+
+  function init(){
+    $$(".tab-button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+    $("loadCsvBtn").onclick=async()=>{
+      const file=$("csvFile").files[0];
+      if (!file){alert("CSVファイルを選択してください。");return;}
+      try{
+        const buffer=await file.arrayBuffer();
+        const text=decodeCsv(buffer,$("csvEncoding").value);
+        const parsed=parseCSV(text);
+        state.headers=parsed.headers;
+        state.rawRows=parsed.rows;
+        populateMapping();
+        if (!state.headers.length) throw new Error("見出し行がありません。");
+      }catch(err){alert("CSVを読み込めませんでした。\n"+err.message);}
+    };
+    $("applyMappingBtn").onclick=applyMapping;
+    $("enableAllBtn").onclick=()=>{
+      state.rows.forEach(r=>r.__enabled=true);
+      renderData();renderPrintLayout();
+    };
+
+    $("previewRowSelect").onchange=e=>{
+      state.previewRowIndex=Number(e.target.value)||0;renderDesign();
+    };
+    $("cardBackground").onchange=e=>{
+      state.template.background=e.target.value;renderDesign();markDirty();
+    };
+    $("addPlaceholderBtn").onclick=()=>addPlaceholder($("placeholderType").value);
+    $("addTextBtn").onclick=addText;
+    $("addImageBtn").onclick=()=>$("addImageInput").click();
+    $("addImageInput").onchange=e=>addImageFile(e.target.files[0]);
+    $("deleteElementBtn").onclick=()=>{
+      if (!state.selectedElementId)return;
+      state.template.elements=state.template.elements.filter(e=>e.id!==state.selectedElementId);
+      state.selectedElementId=null;renderDesign();markDirty();
+    };
+    $("duplicateElementBtn").onclick=()=>{
+      const el=selectedElement();if(!el)return;
+      const copy={...clone(el),id:uid(),name:(el.name||"要素")+" コピー",x:clamp(el.x+2,0,84),y:clamp(el.y+2,0,52)};
+      state.template.elements.push(copy);state.selectedElementId=copy.id;renderDesign();markDirty();
+    };
+    $("moveFrontBtn").onclick=()=>{
+      const i=state.template.elements.findIndex(e=>e.id===state.selectedElementId);
+      if(i<0)return;
+      const [el]=state.template.elements.splice(i,1);state.template.elements.push(el);renderDesign();markDirty();
+    };
+    $("moveBackBtn").onclick=()=>{
+      const i=state.template.elements.findIndex(e=>e.id===state.selectedElementId);
+      if(i<0)return;
+      const [el]=state.template.elements.splice(i,1);state.template.elements.unshift(el);renderDesign();markDirty();
+    };
+
+    bindInspector();
+    $("fontFileInput").onchange=e=>loadFontFiles([...e.target.files]);
+    renderFontManager();
+
+    $("exportTemplateBtn").onclick=()=>{
+      downloadBlob("card-template.json",JSON.stringify(state.template,null,2),"application/json");
+    };
+    $("importTemplateBtn").onclick=()=>$("importTemplateInput").click();
+    $("importTemplateInput").onchange=async e=>{
+      try{
+        const data=JSON.parse(await e.target.files[0].text());
+        if (!data.width || !data.height || !Array.isArray(data.elements)) throw new Error("テンプレート形式が正しくありません。");
+        state.template=data;state.selectedElementId=null;renderDesign();renderPrintLayout();markDirty();
+      }catch(err){alert("テンプレートを読み込めませんでした。\n"+err.message);}
+    };
+    $("restoreDefaultBtn").onclick=()=>{
+      if(!confirm("現在のデザインを標準デザインに戻しますか？"))return;
+      state.template=structuredClone(DEFAULT_TEMPLATE);state.selectedElementId=null;renderDesign();renderPrintLayout();markDirty();
+    };
+
+    $("showFrames").checked=state.settings.showFrames !== false;
+    $("offsetX").value=state.settings.offsetX || 0;
+    $("offsetY").value=state.settings.offsetY || 0;
+    $("showFrames").onchange=renderPrintLayout;
+    $("offsetX").onchange=renderPrintLayout;
+    $("offsetY").onchange=renderPrintLayout;
+    $("refreshLayoutBtn").onclick=renderPrintLayout;
+    $("printBtn").onclick=()=>{
+      const rows=state.rows.filter(r=>r.__enabled);
+      if (!rows.length){alert("印刷対象のデータがありません。");return;}
+      renderPrintLayout();
+      setTimeout(()=>window.print(),250);
+    };
+    $("overrideElementSelect").onchange=e=>{
+      state.selectedPrintElementId=e.target.value;loadOverrideFields();
+    };
+    $("saveOverrideBtn").onclick=saveOverride;
+    $("resetOverrideBtn").onclick=resetOverride;
+
+    $("resetAppBtn").onclick=()=>{
+      if(!confirm("保存済みテンプレート・個別調整・設定を初期化しますか？CSVデータも画面から消えます。"))return;
+      try {
+        window.localStorage.removeItem("cls-template");
+        window.localStorage.removeItem("cls-overrides");
+        window.localStorage.removeItem("cls-settings");
+      } catch {}
+      location.reload();
+    };
+
+    renderData();
+    renderPreviewRowSelect();
+    renderDesign();
+    renderPrintLayout();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
