@@ -1,10 +1,3 @@
-﻿id,贈り主,メッセージ,QRコード
-AG001,田中太郎,この一杯が素敵なひとときにつながりますように,https://quickchart.io/qr?size=600&margin=1&text=https%3A%2F%2Fexample.com%2FAG001
-AG002,山田花子,応援しています。ゆっくり味わってください。,https://quickchart.io/qr?size=600&margin=1&text=https%3A%2F%2Fexample.com%2FAG002
-AG003,佐藤一郎,少し長めのメッセージ例です。忙しい日々の中で、この一杯がほっとひと息つける時間になりますように。,https://quickchart.io/qr?size=600&margin=1&text=https%3A%2F%2Fexample.com%2FAG003
-AG004,鈴木美咲,いつもありがとうございます。,https://quickchart.io/qr?size=600&margin=1&text=https%3A%2F%2Fexample.com%2FAG004
-AG005,高橋健,良い一日を！,https://quickchart.io/qr?size=600&margin=1&text=https%3A%2F%2Fexample.com%2FAG005
-AG006,伊藤明日香,心を込めて贈ります。,https://quickchart.io/qr?size=600&margin=1&text=https%3A%2F%2Fexample.com%2FAG006
-AG007,渡辺翔,この出会いに感謝しています。,https://quickchart.io/qr?size=600&margin=1&text=https%3A%2F%2Fexample.com%2FAG007
-AG008,小林彩,楽しい時間をお過ごしください。,https://quickchart.io/qr?size=600&margin=1&text=https%3A%2F%2Fexample.com%2FAG008
-AG009,加藤悠人,2ページ目のサンプルです。,https://quickchart.io/qr?size=600&margin=1&text=https%3A%2F%2Fexample.com%2FAG009
+id,sender,message,qr
+1,田中太郎,ご利用ありがとうございます。,https://example.com/1
+2,山田花子,素敵な一日になりますように。,https://example.com/2
