@@ -273,11 +273,45 @@
     .badge{display:inline-block;padding:2px 6px;border-radius:999px;background:#eef0f2;color:#59616b;font-size:11px}
     .kbd{border:1px solid var(--line);background:#fff;border-radius:4px;padding:1px 5px;font-size:11px}
     .footer-note{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.7}
-    .font-manager-list{max-height:130px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px;background:#fafbfc}
-    .font-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 6px;border-bottom:1px solid #eceff2}
-    .font-item:last-child{border-bottom:0}
-    .style-section{border-top:1px solid #eceff2;padding-top:12px;margin-top:12px}
-    .style-section:first-child{border-top:0;padding-top:0;margin-top:0}
+    .inspector-tabs{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:4px;
+      margin-bottom:12px;
+      padding:4px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#f5f6f8;
+    }
+    .inspector-tab{
+      border:0;
+      border-radius:7px;
+      padding:7px 3px;
+      font-size:11px;
+      background:transparent;
+    }
+    .inspector-tab.active{
+      background:#fff;
+      color:var(--accent);
+      font-weight:700;
+      box-shadow:0 1px 4px rgba(0,0,0,.08);
+    }
+    .inspector-tab-panel{display:none}
+    .inspector-tab-panel.active{display:block}
+    .shape-toolbar{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+    .shape-preview{
+      display:inline-block;
+      width:18px;height:18px;
+      vertical-align:middle;
+      margin-right:5px;
+      border:1.5px solid currentColor;
+    }
+    .shape-preview.circle{border-radius:50%}
+    .shape-preview.line{
+      height:0;border:0;border-top:2px solid currentColor;
+    }
+    .font-note{font-size:11px;color:var(--muted);line-height:1.5}
+    .google-font-row{display:grid;grid-template-columns:1fr auto;gap:7px}
 
     @media (max-width:1100px){
       .grid-2,.grid-data,.print-layout-grid{grid-template-columns:1fr}
@@ -425,6 +459,9 @@
                   <input id="addImageInput" type="file" accept="image/*" class="hidden">
                   <button id="addImageBtn" type="button">画像追加</button>
                 </label>
+                <button id="addRectBtn"><span class="shape-preview"></span>四角</button>
+                <button id="addCircleBtn"><span class="shape-preview circle"></span>円</button>
+                <button id="addLineBtn"><span class="shape-preview line"></span>線</button>
                 <span class="separator"></span>
                 <button id="moveBackBtn">背面へ</button>
                 <button id="moveFrontBtn">前面へ</button>
@@ -452,79 +489,165 @@
 
           <aside>
             <div class="panel">
-              <h3>テンプレート管理</h3>
-              <div class="row wrap">
-                <button id="exportTemplateBtn">JSONを書き出す</button>
-                <label>
-                  <input id="importTemplateInput" type="file" accept=".json,application/json" class="hidden">
-                  <button id="importTemplateBtn" type="button">JSONを読み込む</button>
-                </label>
-                <button id="restoreDefaultBtn">標準デザインに戻す</button>
+              <div class="inspector-tabs">
+                <button class="inspector-tab active" data-inspector-tab="layers">要素</button>
+                <button class="inspector-tab" data-inspector-tab="text">文字</button>
+                <button class="inspector-tab" data-inspector-tab="image">画像</button>
+                <button class="inspector-tab" data-inspector-tab="shape">図形</button>
+                <button class="inspector-tab" data-inspector-tab="page">ページ</button>
               </div>
-            </div>
 
-            <div class="panel">
-              <h3>フォント管理</h3>
-              <div class="field">
-                <label>ローカルフォントを読み込む（TTF / OTF / WOFF / WOFF2）</label>
-                <input id="fontFileInput" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" multiple>
+              <div id="inspector-layers" class="inspector-tab-panel active">
+                <h3>要素一覧</h3>
+                <div id="elementList" class="element-list"></div>
+                <div class="row wrap" style="margin-top:10px">
+                  <button id="moveBackBtn2">背面へ</button>
+                  <button id="moveFrontBtn2">前面へ</button>
+                  <button id="duplicateElementBtn2">複製</button>
+                  <button id="deleteElementBtn2" class="danger">削除</button>
+                </div>
               </div>
-              <div class="hint">読み込んだフォントはこのブラウザ内で使用します。テンプレートJSONにはフォント名だけを保存します。</div>
-              <div id="fontManagerList" class="font-manager-list" style="margin-top:10px"></div>
-            </div>
 
-            <div class="panel">
-              <h3>要素一覧</h3>
-              <div id="elementList" class="element-list"></div>
-            </div>
-
-            <div class="panel">
-              <h3>選択要素の設定</h3>
-              <div id="noSelection" class="hint">カード上の要素を選択してください。</div>
-              <div id="elementInspector" class="hidden">
-                <div class="field">
-                  <label>名前</label>
-                  <input id="elName">
-                </div>
-                <div class="inspector-grid">
-                  <div class="field"><label>X（mm）</label><input id="elX" type="number" step="0.1"></div>
-                  <div class="field"><label>Y（mm）</label><input id="elY" type="number" step="0.1"></div>
-                  <div class="field"><label>幅（mm）</label><input id="elW" type="number" step="0.1"></div>
-                  <div class="field"><label>高さ（mm）</label><input id="elH" type="number" step="0.1"></div>
-                </div>
-                <div class="style-section">
-                  <div class="inspector-grid">
-                    <div class="field"><label>回転（°）</label><input id="elRotation" type="number" step="1"></div>
-                    <div class="field"><label>透明度（%）</label><input id="elOpacity" type="number" min="0" max="100" step="1"></div>
-                    <div class="field"><label>角丸（mm）</label><input id="elRadius" type="number" min="0" step="0.1"></div>
-                    <div class="field"><label>背景色</label><input id="elBgColor" type="color"></div>
+              <div id="inspector-text" class="inspector-tab-panel">
+                <h3>文字設定</h3>
+                <div id="textNoSelection" class="hint">文字要素を選択してください。</div>
+                <div id="textInspectorPanel" class="hidden">
+                  <div class="field">
+                    <label>内容 / 前置き文字</label>
+                    <textarea id="elText"></textarea>
                   </div>
-                  <div class="field"><label><input id="elBgEnabled" type="checkbox"> 要素の背景色を表示</label></div>
-                  <div class="inspector-grid">
-                    <div class="field"><label>枠線色</label><input id="elBorderColor" type="color"></div>
-                    <div class="field"><label>枠線幅（mm）</label><input id="elBorderWidth" type="number" min="0" step="0.1"></div>
+                  <div class="field">
+                    <label>Google Fonts</label>
+                    <div class="google-font-row">
+                      <select id="googleFontSelect">
+                        <option value="">選択してください</option>
+                        <option value="Noto Sans JP">Noto Sans JP</option>
+                        <option value="Noto Serif JP">Noto Serif JP</option>
+                        <option value="M PLUS 1p">M PLUS 1p</option>
+                        <option value="M PLUS Rounded 1c">M PLUS Rounded 1c</option>
+                        <option value="Zen Kaku Gothic New">Zen Kaku Gothic New</option>
+                        <option value="Zen Old Mincho">Zen Old Mincho</option>
+                        <option value="Shippori Mincho">Shippori Mincho</option>
+                        <option value="Kosugi Maru">Kosugi Maru</option>
+                        <option value="Kaisei Decol">Kaisei Decol</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Montserrat">Montserrat</option>
+                        <option value="Playfair Display">Playfair Display</option>
+                      </select>
+                      <button id="applyGoogleFontBtn">適用</button>
+                    </div>
+                    <div class="font-note">初回表示時にGoogle Fontsから読み込みます。PDF保存前にフォント表示を確認してください。</div>
                   </div>
-                </div>
-                <div id="textInspector" class="style-section">
-                  <div class="field"><label>固定テキスト / 前置き文字</label><textarea id="elText"></textarea></div>
-                  <div class="field"><label>フォント</label><select id="elFontFamily"></select></div>
+                  <div class="field">
+                    <label>フォント指定</label>
+                    <input id="elFontFamily" placeholder="例：Noto Sans JP">
+                  </div>
                   <div class="inspector-grid">
                     <div class="field"><label>文字サイズ（pt）</label><input id="elFontSize" type="number" step="0.25"></div>
                     <div class="field"><label>最小サイズ（pt）</label><input id="elMinFont" type="number" step="0.25"></div>
-                    <div class="field"><label>字間・カーニング（em）</label><input id="elLetterSpacing" type="number" step="0.01"></div>
+                    <div class="field"><label>字間（em）</label><input id="elLetterSpacing" type="number" step="0.01"></div>
                     <div class="field"><label>行間</label><input id="elLineHeight" type="number" step="0.05"></div>
-                    <div class="field"><label>太さ</label><select id="elWeight"><option value="300">細字</option><option value="400">標準</option><option value="500">中</option><option value="600">太め</option><option value="700">太字</option><option value="800">極太</option></select></div>
+                    <div class="field">
+                      <label>太さ</label>
+                      <select id="elWeight">
+                        <option value="300">細字</option>
+                        <option value="400">標準</option>
+                        <option value="500">中</option>
+                        <option value="600">太め</option>
+                        <option value="700">太字</option>
+                        <option value="800">極太</option>
+                        <option value="900">最太</option>
+                      </select>
+                    </div>
                     <div class="field"><label>文字色</label><input id="elColor" type="color"></div>
-                    <div class="field"><label>横揃え</label><select id="elAlign"><option value="left">左</option><option value="center">中央</option><option value="right">右</option><option value="justify">両端</option></select></div>
-                    <div class="field"><label>縦揃え</label><select id="elVAlign"><option value="flex-start">上</option><option value="center">中央</option><option value="flex-end">下</option></select></div>
+                    <div class="field">
+                      <label>横揃え</label>
+                      <select id="elAlign">
+                        <option value="left">左</option>
+                        <option value="center">中央</option>
+                        <option value="right">右</option>
+                        <option value="justify">両端</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>縦揃え</label>
+                      <select id="elVAlign">
+                        <option value="flex-start">上</option>
+                        <option value="center">中央</option>
+                        <option value="flex-end">下</option>
+                      </select>
+                    </div>
                   </div>
                   <div class="field"><label><input id="elItalic" type="checkbox"> イタリック</label></div>
                   <div class="field"><label><input id="elAutoFit" type="checkbox"> 枠内に収まるまで自動縮小</label></div>
                 </div>
-                <div id="imageInspector" class="hidden style-section">
-                  <div class="field"><label>画像URL・QR内容</label><textarea id="elImageSource"></textarea></div>
-                  <div class="field"><label>画像の表示方法</label><select id="elObjectFit"><option value="contain">全体を表示</option><option value="cover">枠いっぱいにトリミング</option><option value="fill">枠に合わせて変形</option></select></div>
-                  <div class="inspector-grid"><div class="field"><label>横位置（%）</label><input id="elObjectX" type="number" min="0" max="100" step="1"></div><div class="field"><label>縦位置（%）</label><input id="elObjectY" type="number" min="0" max="100" step="1"></div></div>
+              </div>
+
+              <div id="inspector-image" class="inspector-tab-panel">
+                <h3>画像設定</h3>
+                <div id="imageNoSelection" class="hint">画像またはQR要素を選択してください。</div>
+                <div id="imageInspectorPanel" class="hidden">
+                  <div class="field">
+                    <label>画像URL・QR内容</label>
+                    <textarea id="elImageSource"></textarea>
+                  </div>
+                  <div class="field">
+                    <label>表示方法</label>
+                    <select id="elObjectFit">
+                      <option value="contain">全体を表示</option>
+                      <option value="cover">枠いっぱいにトリミング</option>
+                      <option value="fill">枠に合わせて変形</option>
+                    </select>
+                  </div>
+                  <div class="inspector-grid">
+                    <div class="field"><label>横位置（%）</label><input id="elObjectX" type="number" min="0" max="100"></div>
+                    <div class="field"><label>縦位置（%）</label><input id="elObjectY" type="number" min="0" max="100"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="inspector-shape" class="inspector-tab-panel">
+                <h3>図形</h3>
+                <div class="shape-toolbar">
+                  <button id="shapeRectBtn">四角形</button>
+                  <button id="shapeCircleBtn">円</button>
+                  <button id="shapeLineBtn">線</button>
+                </div>
+                <div id="shapeNoSelection" class="hint" style="margin-top:10px">図形を選択してください。</div>
+                <div id="shapeInspectorPanel" class="hidden" style="margin-top:10px">
+                  <div class="inspector-grid">
+                    <div class="field"><label>塗り色</label><input id="elFillColor" type="color"></div>
+                    <div class="field"><label>枠線色</label><input id="elStrokeColor" type="color"></div>
+                    <div class="field"><label>枠線幅（mm）</label><input id="elStrokeWidth" type="number" min="0" step="0.1"></div>
+                    <div class="field"><label>角丸（mm）</label><input id="elRadius" type="number" min="0" step="0.1"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="inspector-page" class="inspector-tab-panel">
+                <h3>ページ・共通設定</h3>
+                <div class="field"><label>カード背景色</label><input id="cardBackgroundSide" type="color"></div>
+                <div id="noSelection" class="hint">共通設定を変更する場合は要素を選択してください。</div>
+                <div id="elementInspector" class="hidden">
+                  <div class="field"><label>要素名</label><input id="elName"></div>
+                  <div class="inspector-grid">
+                    <div class="field"><label>X（mm）</label><input id="elX" type="number" step="0.1"></div>
+                    <div class="field"><label>Y（mm）</label><input id="elY" type="number" step="0.1"></div>
+                    <div class="field"><label>幅（mm）</label><input id="elW" type="number" step="0.1"></div>
+                    <div class="field"><label>高さ（mm）</label><input id="elH" type="number" step="0.1"></div>
+                    <div class="field"><label>回転（°）</label><input id="elRotation" type="number" step="1"></div>
+                    <div class="field"><label>透明度（%）</label><input id="elOpacity" type="number" min="0" max="100"></div>
+                  </div>
+                </div>
+                <hr style="border:0;border-top:1px solid #eceff2;margin:14px 0">
+                <h3>テンプレート管理</h3>
+                <div class="row wrap">
+                  <button id="exportTemplateBtn">JSONを書き出す</button>
+                  <label>
+                    <input id="importTemplateInput" type="file" accept=".json,application/json" class="hidden">
+                    <button id="importTemplateBtn" type="button">JSONを読み込む</button>
+                  </label>
+                  <button id="restoreDefaultBtn">標準に戻す</button>
                 </div>
               </div>
             </div>
@@ -655,8 +778,7 @@
     selectedElementId: null,
     previewRowIndex: 0,
     selectedPrintUid: null,
-    selectedPrintElementId: null,
-    loadedFonts: []
+    selectedPrintElementId: null
   };
 
   const $ = id => document.getElementById(id);
@@ -918,21 +1040,24 @@
       node.appendChild(chip);
 
       if (el.type==="text"){
+        if(el.fontFamily) loadGoogleFont(el.fontFamily);
         const inner=document.createElement("div");
         inner.className="element-text";
         inner.textContent=resolveText(el,row,null) || (el.field ? "{{"+el.field+"}}" : "テキスト");
         applyTextStyles(inner,el);
         node.appendChild(inner);
-      } else {
+      } else if(el.type==="image") {
         const img=document.createElement("img");
         const source=el.field ? row?.[el.field] : el.src;
         img.src=extractImageSource(source) || svgPlaceholder(el.name || "画像");
-        img.style.objectFit=el.objectFit || "contain";
+        img.style.objectFit=el.objectFit||"contain";
         img.style.objectPosition=`${el.objectX ?? 50}% ${el.objectY ?? 50}%`;
         img.onerror=()=>{img.src=svgPlaceholder("画像");};
         node.appendChild(img);
+      } else if(el.type==="shape"){
+        applyShapeStyles(node,el);
       }
-      applyCommonElementStyles(node,el);
+      applyCommonStyles(node,el);
       const handle=document.createElement("span");
       handle.className="resize-handle";
       node.appendChild(handle);
@@ -949,25 +1074,57 @@
   function valignToJustify(v){ return v==="center"?"center":v==="flex-end"?"flex-end":"flex-start"; }
   function valignToAlignItems(){ return "stretch"; }
 
-  const SYSTEM_FONTS = [
-    {name:"システム標準", value:'-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",Meiryo,sans-serif'},
-    {name:"游ゴシック", value:'"Yu Gothic","YuGothic",sans-serif'},
-    {name:"游明朝", value:'"Yu Mincho","YuMincho",serif'},
-    {name:"メイリオ", value:'Meiryo,sans-serif'},
-    {name:"ヒラギノ角ゴ", value:'"Hiragino Kaku Gothic ProN",sans-serif'},
-    {name:"ヒラギノ明朝", value:'"Hiragino Mincho ProN",serif'},
-    {name:"Noto Sans JP", value:'"Noto Sans JP",sans-serif'},
-    {name:"Noto Serif JP", value:'"Noto Serif JP",serif'},
-    {name:"Arial", value:'Arial,sans-serif'},
-    {name:"Georgia", value:'Georgia,serif'}
-  ];
-  function applyCommonElementStyles(node, el){
-    node.style.transform=`rotate(${Number(el.rotation||0)}deg)`;node.style.transformOrigin="center center";node.style.opacity=String((el.opacity??100)/100);node.style.borderRadius=(Number(el.radius||0))+"mm";node.style.background=el.bgEnabled?(el.bgColor||"#ffffff"):"transparent";const bw=Number(el.borderWidth||0);node.style.borderStyle=bw>0?"solid":"none";node.style.borderWidth=bw+"mm";node.style.borderColor=el.borderColor||"#000000";
+  function applyCommonStyles(node,el){
+    node.style.transform=`rotate(${Number(el.rotation||0)}deg)`;
+    node.style.transformOrigin="center center";
+    node.style.opacity=String((el.opacity ?? 100)/100);
   }
-  function applyTextStyles(node, el){Object.assign(node.style,{fontFamily:el.fontFamily||SYSTEM_FONTS[0].value,fontSize:(el.fontSize||10)+"pt",lineHeight:String(el.lineHeight||1.2),fontWeight:String(el.weight||"400"),fontStyle:el.italic?"italic":"normal",letterSpacing:(Number(el.letterSpacing||0))+"em",color:el.color||"#1f2328",textAlign:el.align||"left",justifyContent:valignToJustify(el.valign),alignItems:valignToAlignItems(el.valign)});}
-  function populateFontSelect(){const sel=$("elFontFamily");if(!sel)return;const current=selectedElement()?.fontFamily||SYSTEM_FONTS[0].value;const options=[...SYSTEM_FONTS,...state.loadedFonts.map(f=>({name:f.name+"（読込）",value:`"${f.family}"`}))];sel.innerHTML=options.map(f=>`<option value="${escapeAttr(f.value)}">${escapeHtml(f.name)}</option>`).join("");if(![...sel.options].some(o=>o.value===current)){const opt=document.createElement("option");opt.value=current;opt.textContent=current+"（テンプレート指定）";sel.appendChild(opt);}sel.value=current;}
-  async function loadFontFiles(files){for(const file of files){try{const buffer=await file.arrayBuffer();const family="CLSFont_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);const face=new FontFace(family,buffer);await face.load();document.fonts.add(face);state.loadedFonts.push({name:file.name.replace(/\.[^.]+$/,""),family});}catch(err){alert(`${file.name} を読み込めませんでした。\n${err.message}`);}}renderFontManager();populateFontSelect();}
-  function renderFontManager(){const list=$("fontManagerList");if(!list)return;const rows=[...SYSTEM_FONTS.map(f=>({name:f.name,kind:"端末",value:f.value})),...state.loadedFonts.map(f=>({name:f.name,kind:"読込",value:`"${f.family}"`}))];list.innerHTML=rows.map(f=>`<div class="font-item"><span style="font-family:${escapeAttr(f.value)}">${escapeHtml(f.name)}</span><span class="badge">${f.kind}</span></div>`).join("");}
+
+  function applyTextStyles(node,el){
+    Object.assign(node.style,{
+      fontFamily:el.fontFamily ? `"${el.fontFamily}", sans-serif` : '-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",Meiryo,sans-serif',
+      fontSize:(el.fontSize||10)+"pt",
+      lineHeight:String(el.lineHeight||1.2),
+      fontWeight:String(el.weight||"400"),
+      fontStyle:el.italic?"italic":"normal",
+      letterSpacing:(Number(el.letterSpacing||0))+"em",
+      color:el.color||"#1f2328",
+      textAlign:el.align||"left",
+      justifyContent:valignToJustify(el.valign),
+      alignItems:valignToAlignItems(el.valign)
+    });
+  }
+
+  function loadGoogleFont(fontName){
+    if(!fontName)return;
+    const id="gf-"+fontName.replace(/[^a-z0-9]/gi,"-").toLowerCase();
+    if(document.getElementById(id))return;
+    const link=document.createElement("link");
+    link.id=id;
+    link.rel="stylesheet";
+    link.href="https://fonts.googleapis.com/css2?family="+encodeURIComponent(fontName).replace(/%20/g,"+")+":wght@300;400;500;600;700;800;900&display=swap";
+    document.head.appendChild(link);
+  }
+
+  function applyShapeStyles(node,el){
+    node.style.background=el.shapeKind==="line"?"transparent":(el.fillColor||"#d9e8f7");
+    node.style.borderStyle="solid";
+    node.style.borderColor=el.strokeColor||"#2b6cb0";
+    node.style.borderWidth=(Number(el.strokeWidth ?? 0.3))+"mm";
+    node.style.borderRadius=el.shapeKind==="ellipse"?"50%":(Number(el.radius||0))+"mm";
+    if(el.shapeKind==="line"){
+      node.style.height="0";
+      node.style.borderLeft="0";
+      node.style.borderRight="0";
+      node.style.borderBottom="0";
+      node.style.borderTopWidth=(Number(el.strokeWidth||0.5))+"mm";
+    }
+  }
+
+  function setInspectorTab(name){
+    document.querySelectorAll(".inspector-tab").forEach(b=>b.classList.toggle("active",b.dataset.inspectorTab===name));
+    document.querySelectorAll(".inspector-tab-panel").forEach(p=>p.classList.toggle("active",p.id==="inspector-"+name));
+  }
 
   function beginElementPointer(e,el,mode){
     e.preventDefault();e.stopPropagation();
@@ -996,6 +1153,12 @@
 
   function selectElement(id){
     state.selectedElementId=id;
+    const el=state.template.elements.find(e=>e.id===id);
+    if(el){
+      if(el.type==="text")setInspectorTab("text");
+      else if(el.type==="image")setInspectorTab("image");
+      else if(el.type==="shape")setInspectorTab("shape");
+    }
     renderDesign();
   }
 
@@ -1004,7 +1167,7 @@
     list.innerHTML="";
     [...state.template.elements].reverse().forEach(el=>{
       const btn=document.createElement("button");
-      btn.textContent=(el.type==="image"?"画像：":"文字：")+(el.name || el.field || "名称なし");
+      btn.textContent=({image:"画像：",text:"文字：",shape:"図形："})[el.type]+(el.name || el.field || "名称なし");
       btn.classList.toggle("active",state.selectedElementId===el.id);
       btn.onclick=()=>selectElement(el.id);
       list.appendChild(btn);
@@ -1019,38 +1182,87 @@
     const el=selectedElement();
     $("noSelection").classList.toggle("hidden",!!el);
     $("elementInspector").classList.toggle("hidden",!el);
-    if (!el) return;
-    $("elName").value=el.name || "";$("elX").value=el.x;$("elY").value=el.y;$("elW").value=el.w;$("elH").value=el.h;$("elRotation").value=el.rotation||0;$("elOpacity").value=el.opacity??100;$("elRadius").value=el.radius||0;$("elBgColor").value=el.bgColor||"#ffffff";$("elBgEnabled").checked=!!el.bgEnabled;$("elBorderColor").value=el.borderColor||"#000000";$("elBorderWidth").value=el.borderWidth||0;const isText=el.type==="text";
-    $("textInspector").classList.toggle("hidden",!isText);
-    $("imageInspector").classList.toggle("hidden",isText);
-    if (isText){
-      $("elText").value=el.text||"";populateFontSelect();$("elFontSize").value=el.fontSize||10;$("elMinFont").value=el.minFont||6;$("elLetterSpacing").value=el.letterSpacing||0;$("elLineHeight").value=el.lineHeight||1.2;$("elWeight").value=String(el.weight||"400");$("elColor").value=el.color||"#1f2328";$("elAlign").value=el.align||"left";$("elVAlign").value=el.valign||"flex-start";$("elItalic").checked=!!el.italic;$("elAutoFit").checked=!!el.autoFit;
-    } else {$("elImageSource").value=el.field?"{{"+el.field+"}}":(el.src||"");$("elObjectFit").value=el.objectFit||"contain";$("elObjectX").value=el.objectX??50;$("elObjectY").value=el.objectY??50;}
+    $("textNoSelection").classList.toggle("hidden",!!el && el.type==="text");
+    $("textInspectorPanel").classList.toggle("hidden",!(el && el.type==="text"));
+    $("imageNoSelection").classList.toggle("hidden",!!el && el.type==="image");
+    $("imageInspectorPanel").classList.toggle("hidden",!(el && el.type==="image"));
+    $("shapeNoSelection").classList.toggle("hidden",!!el && el.type==="shape");
+    $("shapeInspectorPanel").classList.toggle("hidden",!(el && el.type==="shape"));
+    $("cardBackgroundSide").value=state.template.background||"#ffffff";
+    if(!el)return;
+
+    $("elName").value=el.name||"";
+    $("elX").value=el.x;
+    $("elY").value=el.y;
+    $("elW").value=el.w;
+    $("elH").value=el.h;
+    $("elRotation").value=el.rotation||0;
+    $("elOpacity").value=el.opacity ?? 100;
+
+    if(el.type==="text"){
+      $("elText").value=el.text||"";
+      $("elFontFamily").value=el.fontFamily||"";
+      $("googleFontSelect").value=[...$("googleFontSelect").options].some(o=>o.value===el.fontFamily)?el.fontFamily:"";
+      $("elFontSize").value=el.fontSize||10;
+      $("elMinFont").value=el.minFont||6;
+      $("elLetterSpacing").value=el.letterSpacing||0;
+      $("elLineHeight").value=el.lineHeight||1.2;
+      $("elWeight").value=String(el.weight||"400");
+      $("elColor").value=el.color||"#1f2328";
+      $("elAlign").value=el.align||"left";
+      $("elVAlign").value=el.valign||"flex-start";
+      $("elItalic").checked=!!el.italic;
+      $("elAutoFit").checked=!!el.autoFit;
+    } else if(el.type==="image"){
+      $("elImageSource").value=el.field ? "{{"+el.field+"}}" : (el.src||"");
+      $("elObjectFit").value=el.objectFit||"contain";
+      $("elObjectX").value=el.objectX ?? 50;
+      $("elObjectY").value=el.objectY ?? 50;
+    } else if(el.type==="shape"){
+      $("elFillColor").value=el.fillColor||"#d9e8f7";
+      $("elStrokeColor").value=el.strokeColor||"#2b6cb0";
+      $("elStrokeWidth").value=el.strokeWidth ?? 0.3;
+      $("elRadius").value=el.radius||0;
+    }
   }
 
   function bindInspector(){
-    const common = {
-      elName:["name","string"], elX:["x","number"], elY:["y","number"],
-      elW:["w","number"], elH:["h","number"], elText:["text","string"],
-      elFontSize:["fontSize","number"], elMinFont:["minFont","number"], elLetterSpacing:["letterSpacing","number"], elLineHeight:["lineHeight","number"], elWeight:["weight","string"], elColor:["color","string"], elFontFamily:["fontFamily","string"], elAlign:["align","string"], elVAlign:["valign","string"], elRotation:["rotation","number"], elOpacity:["opacity","number"], elRadius:["radius","number"], elBgColor:["bgColor","string"], elBorderColor:["borderColor","string"], elBorderWidth:["borderWidth","number"], elObjectFit:["objectFit","string"], elObjectX:["objectX","number"], elObjectY:["objectY","number"]
+    const common={
+      elName:["name","string"],elX:["x","number"],elY:["y","number"],
+      elW:["w","number"],elH:["h","number"],elRotation:["rotation","number"],
+      elOpacity:["opacity","number"],elText:["text","string"],
+      elFontFamily:["fontFamily","string"],elFontSize:["fontSize","number"],
+      elMinFont:["minFont","number"],elLetterSpacing:["letterSpacing","number"],
+      elLineHeight:["lineHeight","number"],elWeight:["weight","string"],
+      elColor:["color","string"],elAlign:["align","string"],elVAlign:["valign","string"],
+      elObjectFit:["objectFit","string"],elObjectX:["objectX","number"],elObjectY:["objectY","number"],
+      elFillColor:["fillColor","string"],elStrokeColor:["strokeColor","string"],
+      elStrokeWidth:["strokeWidth","number"],elRadius:["radius","number"]
     };
     Object.entries(common).forEach(([id,[prop,type]])=>{
       $(id).addEventListener("change",e=>{
-        const el=selectedElement(); if(!el)return;
+        const el=selectedElement();if(!el)return;
         el[prop]=type==="number"?Number(e.target.value):e.target.value;
-        sanitizeElement(el);
-        renderDesign();markDirty();
+        if(prop==="fontFamily" && el.fontFamily)loadGoogleFont(el.fontFamily);
+        sanitizeElement(el);renderDesign();renderPrintLayout();markDirty();
       });
     });
     $("elAutoFit").addEventListener("change",e=>{
-      const el=selectedElement();if(!el)return;
-      el.autoFit=e.target.checked;renderDesign();markDirty();
+      const el=selectedElement();if(!el)return;el.autoFit=e.target.checked;renderDesign();renderPrintLayout();markDirty();
     });
-    $("elItalic").addEventListener("change",e=>{const el=selectedElement();if(!el)return;el.italic=e.target.checked;renderDesign();markDirty();});
-    $("elBgEnabled").addEventListener("change",e=>{const el=selectedElement();if(!el)return;el.bgEnabled=e.target.checked;renderDesign();markDirty();});
+    $("elItalic").addEventListener("change",e=>{
+      const el=selectedElement();if(!el)return;el.italic=e.target.checked;renderDesign();renderPrintLayout();markDirty();
+    });
     $("elImageSource").addEventListener("change",e=>{
-      const el=selectedElement();if(!el || el.field)return;
-      el.src=e.target.value;renderDesign();markDirty();
+      const el=selectedElement();if(!el||el.field)return;el.src=e.target.value;renderDesign();renderPrintLayout();markDirty();
+    });
+    $("applyGoogleFontBtn").addEventListener("click",()=>{
+      const el=selectedElement();const font=$("googleFontSelect").value;
+      if(!el||el.type!=="text"||!font)return;
+      el.fontFamily=font;loadGoogleFont(font);renderDesign();renderPrintLayout();markDirty();
+    });
+    $("cardBackgroundSide").addEventListener("change",e=>{
+      state.template.background=e.target.value;$("cardBackground").value=e.target.value;renderDesign();renderPrintLayout();markDirty();
     });
   }
 
@@ -1059,7 +1271,20 @@
     el.y=clamp(Number(el.y)||0,0,state.template.height-1);
     el.w=clamp(Number(el.w)||2,2,state.template.width-el.x);
     el.h=clamp(Number(el.h)||2,2,state.template.height-el.y);
-    el.rotation=clamp(Number(el.rotation)||0,-360,360);el.opacity=clamp(Number(el.opacity??100),0,100);el.radius=clamp(Number(el.radius)||0,0,50);el.borderWidth=clamp(Number(el.borderWidth)||0,0,10);if(el.type==="text"){el.fontSize=clamp(Number(el.fontSize)||10,2,72);el.minFont=clamp(Number(el.minFont)||4,2,el.fontSize);el.letterSpacing=clamp(Number(el.letterSpacing)||0,-0.5,2);el.lineHeight=clamp(Number(el.lineHeight)||1.2,.7,3);}else{el.objectX=clamp(Number(el.objectX??50),0,100);el.objectY=clamp(Number(el.objectY??50),0,100);}
+    el.rotation=clamp(Number(el.rotation)||0,-360,360);
+    el.opacity=clamp(Number(el.opacity ?? 100),0,100);
+    if (el.type==="text"){
+      el.fontSize=clamp(Number(el.fontSize)||10,2,72);
+      el.minFont=clamp(Number(el.minFont)||4,2,el.fontSize);
+      el.letterSpacing=clamp(Number(el.letterSpacing)||0,-0.5,2);
+      el.lineHeight=clamp(Number(el.lineHeight)||1.2,.7,3);
+    } else if(el.type==="image"){
+      el.objectX=clamp(Number(el.objectX ?? 50),0,100);
+      el.objectY=clamp(Number(el.objectY ?? 50),0,100);
+    } else if(el.type==="shape"){
+      el.strokeWidth=clamp(Number(el.strokeWidth ?? 0.3),0,10);
+      el.radius=clamp(Number(el.radius)||0,0,50);
+    }
   }
 
   function addPlaceholder(field){
@@ -1069,8 +1294,8 @@
       x:64,y:18,w:18,h:18
     } : {
       id:uid(),name:fieldLabel(field),type:"text",field,text:field==="sender"?"贈り主：":"",
-      x:8,y:8,w:45,h:10,fontSize:9,minFont:6,lineHeight:1.25,weight:"400",
-      align:"left",valign:"flex-start",autoFit:true
+      x:8,y:8,w:45,h:10,fontFamily:"Noto Sans JP",fontSize:9,minFont:6,letterSpacing:0,lineHeight:1.25,weight:"400",
+      color:"#1f2328",italic:false,align:"left",valign:"flex-start",autoFit:true,rotation:0,opacity:100
     };
     state.template.elements.push(el);
     state.selectedElementId=el.id;
@@ -1080,8 +1305,8 @@
   function addText(){
     const el={
       id:uid(),name:"固定テキスト",type:"text",field:null,text:"テキスト",
-      x:8,y:8,w:35,h:8,fontSize:9,minFont:6,lineHeight:1.2,weight:"400",
-      align:"left",valign:"flex-start",autoFit:false
+      x:8,y:8,w:35,h:8,fontFamily:"Noto Sans JP",fontSize:9,minFont:6,letterSpacing:0,lineHeight:1.2,weight:"400",
+      color:"#1f2328",italic:false,align:"left",valign:"flex-start",autoFit:false,rotation:0,opacity:100
     };
     state.template.elements.push(el);
     state.selectedElementId=el.id;
@@ -1092,12 +1317,27 @@
     if (!file) return;
     const reader=new FileReader();
     reader.onload=()=>{
-      const el={id:uid(),name:file.name,type:"image",field:null,src:reader.result,x:8,y:8,w:25,h:20};
+      const el={id:uid(),name:file.name,type:"image",field:null,src:reader.result,x:8,y:8,w:25,h:20,objectFit:"contain",objectX:50,objectY:50,rotation:0,opacity:100};
       state.template.elements.push(el);
       state.selectedElementId=el.id;
       renderDesign();markDirty();
     };
     reader.readAsDataURL(file);
+  }
+
+
+  function addShape(kind){
+    const names={rect:"四角形",ellipse:"円",line:"線"};
+    const el={
+      id:uid(),name:names[kind],type:"shape",shapeKind:kind,
+      x:10,y:10,w:kind==="line"?40:24,h:kind==="line"?2:18,
+      fillColor:"#d9e8f7",strokeColor:"#2b6cb0",strokeWidth:kind==="line"?0.6:0.3,
+      radius:kind==="rect"?1.5:0,rotation:0,opacity:100
+    };
+    state.template.elements.push(el);
+    state.selectedElementId=el.id;
+    setInspectorTab("shape");
+    renderDesign();renderPrintLayout();markDirty();
   }
 
   function fieldLabel(field){
@@ -1155,7 +1395,24 @@
           node.style.width=el.w+"mm";
           node.style.height=el.h+"mm";
           node.style.zIndex=String(z+1);
-          if (el.type==="text"){node.textContent=resolveText(baseEl,row,el.__override);applyTextStyles(node,el);} else {const img=document.createElement("img");const raw=(el.__override&&el.__override.content!==undefined&&el.__override.content!=="")?el.__override.content:(baseEl.field?row[baseEl.field]:baseEl.src);img.src=extractImageSource(raw)||svgPlaceholder(baseEl.name||"画像");img.style.objectFit=el.objectFit||"contain";img.style.objectPosition=`${el.objectX ?? 50}% ${el.objectY ?? 50}%`;img.onerror=()=>{img.src=svgPlaceholder("画像なし");};node.appendChild(img);}applyCommonElementStyles(node,el);card.appendChild(node);
+          if (el.type==="text"){
+            if(el.fontFamily)loadGoogleFont(el.fontFamily);
+            node.textContent=resolveText(baseEl,row,el.__override);
+            applyTextStyles(node,el);
+          } else if(el.type==="image"){
+            const img=document.createElement("img");
+            const raw=(el.__override && el.__override.content!==undefined && el.__override.content!=="")?
+              el.__override.content:(baseEl.field?row[baseEl.field]:baseEl.src);
+            img.src=extractImageSource(raw)||svgPlaceholder(baseEl.name||"画像");
+            img.style.objectFit=el.objectFit||"contain";
+            img.style.objectPosition=`${el.objectX ?? 50}% ${el.objectY ?? 50}%`;
+            img.onerror=()=>{img.src=svgPlaceholder("画像なし");};
+            node.appendChild(img);
+          } else if(el.type==="shape"){
+            applyShapeStyles(node,el);
+          }
+          applyCommonStyles(node,el);
+          card.appendChild(node);
         });
         page.appendChild(card);
       }
@@ -1294,7 +1551,7 @@
       state.previewRowIndex=Number(e.target.value)||0;renderDesign();
     };
     $("cardBackground").onchange=e=>{
-      state.template.background=e.target.value;renderDesign();markDirty();
+      state.template.background=e.target.value;$("cardBackgroundSide").value=e.target.value;renderDesign();renderPrintLayout();markDirty();
     };
     $("addPlaceholderBtn").onclick=()=>addPlaceholder($("placeholderType").value);
     $("addTextBtn").onclick=addText;
@@ -1322,8 +1579,18 @@
     };
 
     bindInspector();
-    $("fontFileInput").onchange=e=>loadFontFiles([...e.target.files]);
-    renderFontManager();
+    document.querySelectorAll(".inspector-tab").forEach(b=>b.onclick=()=>setInspectorTab(b.dataset.inspectorTab));
+    $("addRectBtn").onclick=()=>addShape("rect");
+    $("addCircleBtn").onclick=()=>addShape("ellipse");
+    $("addLineBtn").onclick=()=>addShape("line");
+    $("shapeRectBtn").onclick=()=>addShape("rect");
+    $("shapeCircleBtn").onclick=()=>addShape("ellipse");
+    $("shapeLineBtn").onclick=()=>addShape("line");
+    $("moveBackBtn2").onclick=()=>$("moveBackBtn").click();
+    $("moveFrontBtn2").onclick=()=>$("moveFrontBtn").click();
+    $("duplicateElementBtn2").onclick=()=>$("duplicateElementBtn").click();
+    $("deleteElementBtn2").onclick=()=>$("deleteElementBtn").click();
+    ["Noto Sans JP","Noto Serif JP"].forEach(loadGoogleFont);
 
     $("exportTemplateBtn").onclick=()=>{
       downloadBlob("card-template.json",JSON.stringify(state.template,null,2),"application/json");

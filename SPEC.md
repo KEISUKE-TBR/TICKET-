@@ -125,8 +125,3 @@ CSVに登録された「贈り主」「メッセージ」「QRコード」を、
 - テスト枠を非表示にできる
 - 印刷画面でA4・100%設定により出力できる
 - リロード後もテンプレートが残る
-
-
-## 10. デザイン拡張仕様
-
-TTF/OTF/WOFF/WOFF2、font-family、font-size、font-weight、font-style、letter-spacing、line-height、文字色、背景色、枠線、透明度、回転、角丸、画像object-fit/object-positionに対応。
