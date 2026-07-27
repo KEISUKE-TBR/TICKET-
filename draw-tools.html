@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Card Studio - Draw Tools Preview</title>
+  <style>
+    html,body{margin:0;height:100%;background:#1e1e1e;color:#fff;font-family:system-ui,sans-serif}
+    #loading{display:grid;place-items:center;height:100%;font-size:14px;color:#bbb}
+  </style>
+</head>
+<body>
+  <div id="loading">Card Studioを読み込んでいます…</div>
+  <script>
+    fetch('./index.html', {cache:'no-store'})
+      .then(response => {
+        if (!response.ok) throw new Error('index.htmlの取得に失敗しました');
+        return response.text();
+      })
+      .then(html => {
+        const enhanced = html.replace('</body>', '<script src="./draw-tools.js"><\/script></body>');
+        document.open();
+        document.write(enhanced);
+        document.close();
+      })
+      .catch(error => {
+        document.getElementById('loading').textContent = error.message;
+      });
+  </script>
+</body>
+</html>
