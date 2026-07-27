@@ -1,0 +1,53 @@
+.obj.selected{
+  outline:1.5px solid var(--accent)!important;
+  outline-offset:1px;
+  cursor:move;
+}
+.obj.selected .unified-handle{
+  position:absolute;
+  width:10px;
+  height:10px;
+  padding:0;
+  margin:0;
+  border:1.5px solid var(--accent);
+  border-radius:3px;
+  background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.28);
+  z-index:30;
+  transform:none;
+}
+.obj.selected .unified-handle.nw{left:-6px;top:-6px;cursor:nwse-resize}
+.obj.selected .unified-handle.n{left:50%;top:-6px;transform:translateX(-50%);cursor:ns-resize}
+.obj.selected .unified-handle.ne{right:-6px;top:-6px;cursor:nesw-resize}
+.obj.selected .unified-handle.e{right:-6px;top:50%;transform:translateY(-50%);cursor:ew-resize}
+.obj.selected .unified-handle.se{right:-6px;bottom:-6px;cursor:nwse-resize}
+.obj.selected .unified-handle.s{left:50%;bottom:-6px;transform:translateX(-50%);cursor:ns-resize}
+.obj.selected .unified-handle.sw{left:-6px;bottom:-6px;cursor:nesw-resize}
+.obj.selected .unified-handle.w{left:-6px;top:50%;transform:translateY(-50%);cursor:ew-resize}
+.obj.selected .unified-handle.rotate{
+  left:50%;
+  top:-32px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  cursor:grab;
+}
+.obj.selected .unified-handle.rotate::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:9px;
+  width:1px;
+  height:15px;
+  background:var(--accent);
+  transform:translateX(-50%);
+  z-index:-1;
+}
+.image-node{pointer-events:none;-webkit-user-drag:none}
+.obj{touch-action:none}
+@media (pointer:coarse){
+  .obj.selected .unified-handle{width:14px;height:14px}
+  .obj.selected .unified-handle.nw{left:-8px;top:-8px}
+  .obj.selected .unified-handle.ne{right:-8px;top:-8px}
+  .obj.selected .unified-handle.se{right:-8px;bottom:-8px}
+  .obj.selected .unified-handle.sw{left:-8px;bottom:-8px}
+}
