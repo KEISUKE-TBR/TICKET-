@@ -19,8 +19,8 @@
       })
       .then(html => {
         const enhanced = html
-          .replace('</head>', '<link rel="stylesheet" href="./ui-polish.css"></head>')
-          .replace('</body>', '<script src="./draw-tools.js"><\/script><script src="./ui-polish.js"><\/script></body>');
+          .replace('</head>', '<link rel="stylesheet" href="./ui-polish.css"><link rel="stylesheet" href="./unified-interactions.css"></head>')
+          .replace('</body>', '<script src="./draw-tools.js"><\/script><script src="./ui-polish.js"><\/script><script src="./unified-interactions.js"><\/script></body>');
         document.open();
         document.write(enhanced);
         document.close();
