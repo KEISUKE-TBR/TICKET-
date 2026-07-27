@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Card Studio - Draw Tools Preview</title>
   <style>
-    html,body{margin:0;height:100%;background:#1e1e1e;color:#fff;font-family:system-ui,sans-serif}
-    #loading{display:grid;place-items:center;height:100%;font-size:14px;color:#bbb}
+    html,body{margin:0;height:100%;background:#111318;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif}
+    #loading{display:grid;place-items:center;height:100%;font-size:14px;color:#aeb5c0}
   </style>
 </head>
 <body>
@@ -18,7 +18,9 @@
         return response.text();
       })
       .then(html => {
-        const enhanced = html.replace('</body>', '<script src="./draw-tools.js"><\/script></body>');
+        const enhanced = html
+          .replace('</head>', '<link rel="stylesheet" href="./ui-polish.css"></head>')
+          .replace('</body>', '<script src="./draw-tools.js"><\/script><script src="./ui-polish.js"><\/script></body>');
         document.open();
         document.write(enhanced);
         document.close();
